@@ -58,12 +58,17 @@ export function DashboardDataProvider({
         const res = await fetch("/api/me", { cache: "no-store" });
         if (cancelled) return;
         if (res.status === 401) {
-          window.location.assign("/login?callbackUrl=/dashboard");
+          // Keep SSR shell if present; only bounce when we have no session data.
+          if (!initial) {
+            window.location.assign("/login?callbackUrl=/dashboard");
+          }
           return;
         }
         if (!res.ok) return;
         const body = (await res.json()) as Record<string, unknown>;
         if (!cancelled) setData(asPayload(body));
+      } catch {
+        // Keep initial SSR payload if refresh fails.
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -71,7 +76,7 @@ export function DashboardDataProvider({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initial]);
 
   const value = useMemo(
     () => ({ data, loading, refresh }),

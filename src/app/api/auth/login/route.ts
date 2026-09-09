@@ -8,6 +8,8 @@ import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days (Auth.js default)
 
 function useSecureCookies(req: Request) {
+  // Prefer AUTH_URL so cookie name matches Auth.js `auth()` / JWT salt.
+  // Set AUTH_URL=https://www.porpin.com in Vercel (not localhost).
   const authUrl = process.env.AUTH_URL?.trim();
   if (authUrl?.startsWith("https://")) return true;
   if (authUrl?.startsWith("http://")) return false;

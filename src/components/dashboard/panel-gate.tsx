@@ -21,7 +21,12 @@ export function DashboardPanelGate({
 }) {
   const { data, loading } = useDashboardData();
   if (!data) {
-    return loading ? <PanelSkeleton /> : <PanelSkeleton />;
+    if (loading) return <PanelSkeleton />;
+    return (
+      <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/60">
+        Could not load dashboard data. Refresh the page or sign in again.
+      </div>
+    );
   }
   return <>{children(data)}</>;
 }

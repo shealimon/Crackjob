@@ -7,12 +7,17 @@ function safeCallbackUrl(value: string | null): string {
   return value;
 }
 
+/** Match /api/auth/login cookie naming (AUTH_URL can force non-secure names). */
+async function readSessionToken(req: NextRequest) {
+  const secret = process.env.AUTH_SECRET;
+  const secure = await getToken({ req, secret, secureCookie: true });
+  if (secure) return secure;
+  return getToken({ req, secret, secureCookie: false });
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-  });
+  const token = await readSessionToken(req);
   const isLoggedIn = Boolean(token);
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isProtected =

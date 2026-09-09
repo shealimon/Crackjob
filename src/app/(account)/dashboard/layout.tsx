@@ -1,34 +1,31 @@
-"use client";
-
-import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data";
+import { DashboardDataProvider } from "@/components/dashboard/dashboard-data";
 import { DashboardShell } from "@/components/dashboard/shell";
+import { getDashboardShell } from "@/lib/dashboard-data";
 
-function DashboardChrome({ children }: { children: React.ReactNode }) {
-  const { data } = useDashboardData();
-  const user = data?.user;
-
-  return (
-    <DashboardShell
-      user={{
-        name: user?.name ?? null,
-        email: user?.email ?? null,
-        planLabel: user?.planLabel ?? "…",
-        fullAccess: user?.fullAccess ?? false,
-      }}
-    >
-      {children}
-    </DashboardShell>
-  );
-}
-
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const shell = await getDashboardShell();
+  const initial = {
+    user: shell.user,
+    usageByDay: [] as { date: string; creditsUsed: number }[],
+    desktopSession: shell.desktopSession,
+  };
+
   return (
-    <DashboardDataProvider initial={null}>
-      <DashboardChrome>{children}</DashboardChrome>
+    <DashboardDataProvider initial={initial}>
+      <DashboardShell
+        user={{
+          name: shell.user.name,
+          email: shell.user.email,
+          planLabel: shell.user.planLabel,
+          fullAccess: shell.user.fullAccess,
+        }}
+      >
+        {children}
+      </DashboardShell>
     </DashboardDataProvider>
   );
 }
