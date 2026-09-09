@@ -1,18 +1,28 @@
 import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { sessionTokenCookieName } from "@/lib/session-cookie";
 
 function safeCallbackUrl(value: string | null): string {
   if (!value?.startsWith("/") || value.startsWith("//")) return "/dashboard";
   return value;
 }
 
-/** Match /api/auth/login cookie naming (AUTH_URL can force non-secure names). */
+/** Try both cookie variants (Secure / non-Secure) so AUTH_URL mismatches don't bounce users. */
 async function readSessionToken(req: NextRequest) {
   const secret = process.env.AUTH_SECRET;
-  const secure = await getToken({ req, secret, secureCookie: true });
-  if (secure) return secure;
-  return getToken({ req, secret, secureCookie: false });
+  for (const secureCookie of [true, false] as const) {
+    const cookieName = sessionTokenCookieName(secureCookie);
+    const token = await getToken({
+      req,
+      secret,
+      secureCookie,
+      cookieName,
+      salt: cookieName,
+    });
+    if (token) return token;
+  }
+  return null;
 }
 
 export async function middleware(req: NextRequest) {

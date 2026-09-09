@@ -6,6 +6,11 @@ import { loginSchema } from "@/lib/auth-credentials";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 import { prisma } from "@/lib/prisma";
+import {
+  sessionTokenCookieName,
+  sessionTokenCookieOptions,
+  useSecureAuthCookies,
+} from "@/lib/session-cookie";
 import { ensureUserBundle } from "@/lib/user-bundle";
 
 class EmailNotVerifiedError extends CredentialsSignin {
@@ -15,6 +20,8 @@ class EmailNotVerifiedError extends CredentialsSignin {
 const googleConfigured = Boolean(
   process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET,
 );
+
+const secureCookies = useSecureAuthCookies();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -67,6 +74,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   session: { strategy: "jwt" },
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: sessionTokenCookieName(secureCookies),
+      options: sessionTokenCookieOptions(secureCookies),
+    },
+  },
   pages: {
     signIn: "/login",
   },

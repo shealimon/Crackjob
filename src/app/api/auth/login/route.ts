@@ -2,21 +2,15 @@ import { encode } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import { loginSchema } from "@/lib/auth-credentials";
 import { prisma } from "@/lib/prisma";
+import {
+  sessionTokenCookieName,
+  sessionTokenCookieOptions,
+  useSecureAuthCookies,
+} from "@/lib/session-cookie";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days (Auth.js default)
-
-function useSecureCookies(req: Request) {
-  // Prefer AUTH_URL so cookie name matches Auth.js `auth()` / JWT salt.
-  // Set AUTH_URL=https://www.porpin.com in Vercel (not localhost).
-  const authUrl = process.env.AUTH_URL?.trim();
-  if (authUrl?.startsWith("https://")) return true;
-  if (authUrl?.startsWith("http://")) return false;
-  const proto = req.headers.get("x-forwarded-proto");
-  if (proto) return proto.split(",")[0]?.trim() === "https";
-  return new URL(req.url).protocol === "https:";
-}
 
 function metaName(authUser: { user_metadata?: Record<string, unknown> }) {
   return typeof authUser.user_metadata?.name === "string"
@@ -57,8 +51,8 @@ export async function POST(req: Request) {
   const authUser = data.user;
   const email = authUser.email!.toLowerCase();
   const name = metaName(authUser);
-  const secure = useSecureCookies(req);
-  const cookieName = secure ? "__Secure-authjs.session-token" : "authjs.session-token";
+  const secure = useSecureAuthCookies(req);
+  const cookieName = sessionTokenCookieName(secure);
 
   // Overlap Prisma lookup with JWT encode (same id for normal users).
   const [existing, encoded] = await Promise.all([
@@ -101,10 +95,7 @@ export async function POST(req: Request) {
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(cookieName, sessionToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    secure,
+    ...sessionTokenCookieOptions(secure),
     maxAge: SESSION_MAX_AGE,
   });
   return res;
