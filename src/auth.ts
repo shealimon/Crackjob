@@ -23,7 +23,11 @@ const googleConfigured = Boolean(
 
 const secureCookies = useSecureAuthCookies();
 
+/** Vercel .env import sometimes keeps wrapping quotes on secrets. */
+const authSecret = process.env.AUTH_SECRET?.trim().replace(/^["']|["']$/g, "");
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: authSecret,
   adapter: PrismaAdapter(prisma),
   providers: [
     Credentials({

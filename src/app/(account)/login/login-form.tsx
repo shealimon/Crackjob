@@ -77,19 +77,21 @@ export function LoginForm() {
     setPending(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ email, password }),
+      // Use Auth.js so session cookies match middleware + auth() exactly.
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+        callbackUrl,
       });
-      const data = (await res.json().catch(() => null)) as
-        | { ok?: boolean; code?: string }
-        | null;
 
-      if (!res.ok || !data?.ok) {
+      if (!result || result.error) {
         setPending(false);
-        if (data?.code === "email_not_verified") {
+        const code = (result as { code?: string } | undefined)?.code ?? result?.error;
+        if (
+          code === "email_not_verified" ||
+          String(code).toLowerCase().includes("email_not_verified")
+        ) {
           setNeedsResend(true);
           toast("Verify your email before signing in.", "error");
           return;
@@ -98,8 +100,7 @@ export function LoginForm() {
         return;
       }
 
-      // Hard navigate once — router.push + refresh was loading /dashboard twice (2–6s each).
-      window.location.assign(callbackUrl);
+      window.location.assign(result.url || callbackUrl);
     } catch {
       setPending(false);
       toast("Could not start a session. Try again.", "error");
