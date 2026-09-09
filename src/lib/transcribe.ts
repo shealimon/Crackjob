@@ -73,7 +73,9 @@ export async function transcribeWavBuffer(
   }
 
   const client = getClient();
-  const file = new File([bytes], "meeting.wav", { type: "audio/wav" });
+  const file = new File([Uint8Array.from(bytes)], "meeting.wav", {
+    type: "audio/wav",
+  });
   const whisperLanguage = meetingLanguageToWhisperCode(language);
 
   const result = await client.audio.transcriptions.create({

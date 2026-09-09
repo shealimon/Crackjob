@@ -90,7 +90,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async createUser({ user }) {
       if (!user.id) return;
       await ensureUserBundle(user.id);
-      if (!user.emailVerified) {
+      const emailVerified =
+        "emailVerified" in user
+          ? (user as { emailVerified?: Date | null }).emailVerified
+          : null;
+      if (!emailVerified) {
         await prisma.user.update({
           where: { id: user.id },
           data: { emailVerified: new Date() },
