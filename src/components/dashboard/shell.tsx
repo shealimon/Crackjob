@@ -135,7 +135,9 @@ export function DashboardShell({
             <button
               type="button"
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-black/70 hover:bg-black/[0.04] hover:text-black"
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={() =>
+                signOut({ callbackUrl: `${window.location.origin}/` })
+              }
             >
               <LogoutIcon className="size-4" />
               Log out

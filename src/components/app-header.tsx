@@ -68,7 +68,9 @@ export function AppHeader() {
               </Link>
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() =>
+                  signOut({ callbackUrl: `${window.location.origin}/` })
+                }
                 className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
               >
                 {firstName ?? "Sign out"}
