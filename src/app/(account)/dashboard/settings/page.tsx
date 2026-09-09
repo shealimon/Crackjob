@@ -1,7 +1,12 @@
-import { SettingsPanel } from "@/components/dashboard/settings-panel";
-import { getDashboardShell } from "@/lib/dashboard-data";
+"use client";
 
-export default async function DashboardSettingsPage() {
-  const data = await getDashboardShell();
-  return <SettingsPanel initial={{ ...data, usageByDay: [] }} />;
+import { SettingsPanel } from "@/components/dashboard/settings-panel";
+import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
+
+export default function DashboardSettingsPage() {
+  return (
+    <DashboardPanelGate>
+      {(data) => <SettingsPanel initial={data} />}
+    </DashboardPanelGate>
+  );
 }

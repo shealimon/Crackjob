@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: websiteRoot,
   },
+  experimental: {
+    // Keep soft-navigations snappy; dashboard menus remount less often.
+    staleTimes: {
+      dynamic: 60,
+      static: 300,
+    },
+  },
   env: {
     NEXT_PUBLIC_GOOGLE_CONFIGURED: process.env.AUTH_GOOGLE_ID ? "true" : "false",
   },

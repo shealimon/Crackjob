@@ -1,7 +1,12 @@
-import { UsagePanel } from "@/components/dashboard/usage-panel";
-import { getDashboardPayload } from "@/lib/dashboard-data";
+"use client";
 
-export default async function DashboardUsagePage() {
-  const data = await getDashboardPayload();
-  return <UsagePanel initial={data} />;
+import { UsagePanel } from "@/components/dashboard/usage-panel";
+import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
+
+export default function DashboardUsagePage() {
+  return (
+    <DashboardPanelGate>
+      {(data) => <UsagePanel initial={data} />}
+    </DashboardPanelGate>
+  );
 }

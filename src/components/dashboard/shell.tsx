@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { signOut } from "next-auth/react";
 import { BrandMark } from "@/components/brand-mark";
 import {
@@ -42,6 +42,8 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -53,6 +55,12 @@ export function DashboardShell({
     setMobileOpen(false);
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    for (const item of NAV) {
+      router.prefetch(item.href);
+    }
+  }, [router]);
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -71,6 +79,13 @@ export function DashboardShell({
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
+  function go(href: string) {
+    if (href === pathname) return;
+    startTransition(() => {
+      router.push(href);
+    });
+  }
+
   const nav = (
     <nav className="flex flex-1 flex-col gap-0.5 px-2 pt-2">
       {NAV.map((item) => {
@@ -80,6 +95,20 @@ export function DashboardShell({
           <Link
             key={item.href}
             href={item.href}
+            prefetch
+            onClick={(event) => {
+              if (
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey ||
+                event.button !== 0
+              ) {
+                return;
+              }
+              event.preventDefault();
+              go(item.href);
+            }}
             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition ${
               active
                 ? "bg-black/[0.06] text-black"
@@ -109,7 +138,11 @@ export function DashboardShell({
               <Link
                 href="/dashboard/billing"
                 className="flex w-full items-center justify-center rounded-lg bg-black px-3 py-2 text-[13px] font-semibold text-white hover:bg-black/85"
-                onClick={() => setMenuOpen(false)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setMenuOpen(false);
+                  go("/dashboard/billing");
+                }}
               >
                 Upgrade plan
               </Link>
@@ -167,10 +200,16 @@ export function DashboardShell({
 
   return (
     <div className="dashboard-light flex min-h-screen bg-[var(--dash-bg)] text-[var(--dash-fg)]">
-      {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r border-black/8 bg-[var(--dash-sidebar)] lg:flex">
         <div className="flex h-14 items-center px-4">
-          <Link href="/dashboard" className="dash-brand">
+          <Link
+            href="/dashboard"
+            className="dash-brand"
+            onClick={(e) => {
+              e.preventDefault();
+              go("/dashboard");
+            }}
+          >
             <BrandMark />
           </Link>
         </div>
@@ -178,9 +217,15 @@ export function DashboardShell({
         {userBlock}
       </aside>
 
-      {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-black/8 bg-[var(--dash-sidebar)] px-4 lg:hidden">
-        <Link href="/dashboard" className="dash-brand">
+        <Link
+          href="/dashboard"
+          className="dash-brand"
+          onClick={(e) => {
+            e.preventDefault();
+            go("/dashboard");
+          }}
+        >
           <BrandMark />
         </Link>
         <button
@@ -209,7 +254,13 @@ export function DashboardShell({
       ) : null}
 
       <main className="min-w-0 flex-1 pt-14 lg:pt-0">
-        <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10">{children}</div>
+        <div
+          className={`mx-auto w-full max-w-5xl px-5 py-8 transition-opacity sm:px-8 sm:py-10 ${
+            pending ? "opacity-60" : "opacity-100"
+          }`}
+        >
+          {children}
+        </div>
       </main>
     </div>
   );

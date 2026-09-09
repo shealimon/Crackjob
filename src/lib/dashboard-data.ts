@@ -39,6 +39,19 @@ async function requireUserId() {
   return userId;
 }
 
+/** Sidebar chrome only — keep layout fetch minimal for faster navigations. */
+export const getDashboardNavUser = cache(async () => {
+  const userId = await requireUserId();
+  const raw = await userPublicPayload(userId);
+  if (!raw) redirect("/login");
+  return {
+    name: raw.name,
+    email: raw.email,
+    planLabel: planLabel(raw.plan),
+    fullAccess: raw.fullAccess,
+  };
+});
+
 /** Shell / overview — no 14-day usage scan. */
 export const getDashboardShell = cache(async () => {
   const userId = await requireUserId();

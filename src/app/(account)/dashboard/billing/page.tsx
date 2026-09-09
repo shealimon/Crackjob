@@ -1,7 +1,12 @@
-import { BillingPanel } from "@/components/dashboard/billing-panel";
-import { getDashboardShell } from "@/lib/dashboard-data";
+"use client";
 
-export default async function DashboardBillingPage() {
-  const data = await getDashboardShell();
-  return <BillingPanel initial={{ ...data, usageByDay: [] }} />;
+import { BillingPanel } from "@/components/dashboard/billing-panel";
+import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
+
+export default function DashboardBillingPage() {
+  return (
+    <DashboardPanelGate>
+      {(data) => <BillingPanel initial={data} />}
+    </DashboardPanelGate>
+  );
 }

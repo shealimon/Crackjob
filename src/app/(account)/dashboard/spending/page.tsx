@@ -1,7 +1,12 @@
-import { SpendingPanel } from "@/components/dashboard/spending-panel";
-import { getDashboardPayload } from "@/lib/dashboard-data";
+"use client";
 
-export default async function DashboardSpendingPage() {
-  const data = await getDashboardPayload();
-  return <SpendingPanel initial={data} />;
+import { SpendingPanel } from "@/components/dashboard/spending-panel";
+import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
+
+export default function DashboardSpendingPage() {
+  return (
+    <DashboardPanelGate>
+      {(data) => <SpendingPanel initial={data} />}
+    </DashboardPanelGate>
+  );
 }

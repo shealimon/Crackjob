@@ -1,14 +1,12 @@
-import { OverviewPanel } from "@/components/dashboard/overview-panel";
-import { getDashboardShell } from "@/lib/dashboard-data";
+"use client";
 
-export default async function DashboardOverviewPage() {
-  const data = await getDashboardShell();
+import { OverviewPanel } from "@/components/dashboard/overview-panel";
+import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
+
+export default function DashboardOverviewPage() {
   return (
-    <OverviewPanel
-      initial={{
-        ...data,
-        usageByDay: [],
-      }}
-    />
+    <DashboardPanelGate>
+      {(data) => <OverviewPanel initial={data} />}
+    </DashboardPanelGate>
   );
 }
