@@ -36,21 +36,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-5 lg:flex">
-          {signedIn ? (
-            <Link
-              href="/dashboard"
-              className="font-display text-[16px] font-medium tracking-[-0.01em] text-white/70 transition hover:text-white"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="font-display text-[16px] font-medium tracking-[-0.01em] text-white/70 transition hover:text-white"
-            >
-              Login
-            </Link>
-          )}
+          <Link
+            href={signedIn ? "/dashboard" : "/login"}
+            className="font-display text-[16px] font-medium tracking-[-0.01em] text-white/70 transition hover:text-white"
+          >
+            Login
+          </Link>
           <Link
             href={signedIn ? "/dashboard" : "/signup"}
             className="inline-flex h-10 items-center rounded-full bg-white px-5 font-display text-[14px] font-semibold tracking-[-0.01em] text-[#0b0705] transition hover:bg-[#eaeaeb]"
@@ -99,7 +90,7 @@ export function SiteHeader() {
               onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
             >
-              {signedIn ? "Dashboard" : "Login"}
+              Login
             </Link>
             <Link
               href={signedIn ? "/dashboard" : "/signup"}

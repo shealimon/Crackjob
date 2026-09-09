@@ -58,32 +58,23 @@ export function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-5 lg:flex">
+          <Link
+            href={signedIn ? "/dashboard" : "/login"}
+            className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
+          >
+            Login
+          </Link>
           {signedIn ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
-              >
-                Dashboard
-              </Link>
-              <button
-                type="button"
-                onClick={() =>
-                  signOut({ callbackUrl: `${window.location.origin}/` })
-                }
-                className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
-              >
-                {firstName ?? "Sign out"}
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/login"
+            <button
+              type="button"
+              onClick={() =>
+                signOut({ callbackUrl: `${window.location.origin}/` })
+              }
               className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
             >
-              Login
-            </Link>
-          )}
+              {firstName ?? "Sign out"}
+            </button>
+          ) : null}
           <Link
             href="/download"
             className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent px-5 font-display text-[13px] font-semibold tracking-[-0.01em] text-on-accent transition hover:bg-accent-hover"
@@ -133,7 +124,7 @@ export function AppHeader() {
               onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
             >
-              {signedIn ? "Dashboard" : "Login"}
+              Login
             </Link>
             <Link
               href="/download"
