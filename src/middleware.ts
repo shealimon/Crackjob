@@ -1,14 +1,19 @@
-import { auth } from "@/auth";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 function safeCallbackUrl(value: string | null): string {
   if (!value?.startsWith("/") || value.startsWith("//")) return "/dashboard";
   return value;
 }
 
-export default auth((req) => {
+export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
-  const isLoggedIn = Boolean(req.auth);
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+  });
+  const isLoggedIn = Boolean(token);
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isProtected =
     pathname.startsWith("/dashboard") || pathname.startsWith("/auth/desktop");
@@ -24,7 +29,9 @@ export default auth((req) => {
     login.searchParams.set("callbackUrl", pathname + search);
     return NextResponse.redirect(login);
   }
-});
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
