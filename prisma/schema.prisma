@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Login identity only — no billing or AI fields here.
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  mobileno      String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts            Account[]
+  sessions            Session[]
+  profile             Profile?
+  subscription        Subscription?
+  aiUsages            AiUsage[]
+  desktopSessions     DesktopSession[]
+  interviewQuestions  InterviewQuestion[]
+}
+
+/// Thin profile — CV is the main context source.
+model Profile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  targetRole String?
+  resumeText String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Access is time-based. free = forever explore; paid = full until endsAt.
+model Subscription {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  /// free | month_1 | month_3 | year
+  plan               String    @default("free")
+  /// active | expired | canceled
+  status             String    @default("active")
+  startsAt           DateTime  @default(now())
+  endsAt             DateTime?
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
+  amountPaise        Int?
+  currency           String?   @default("INR")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([plan, status])
+}
+
+/// One row per AI solve — used for daily usage charts.
+model AiUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  mode         String
+  status       String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  creditsUsed  Int      @default(0)
+  /// full | explore (partial / limited answer)
+  accessLevel  String   @default("full")
+  error        String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// One row per user per calendar day — `question` holds the full local day JSON.
+model InterviewQuestion {
+  id        String   @id @default(cuid())
+  userId    String
+  /// YYYY-MM-DD
+  date      String
+  /// Full contents of app_data/interview-questions/YYYY-MM-DD.json
+  question  String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+/// Persistent Windows app session (email login → long-lived token).
+model DesktopSession {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  deviceName String?
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+}
+
+/// NextAuth / Auth.js (Google later).
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

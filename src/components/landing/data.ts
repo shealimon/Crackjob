@@ -1,0 +1,419 @@
+export const NAV_LINKS = [
+  { href: "/#proof", label: "Proof" },
+  { href: "/#pricing", label: "Pricing" },
+  { href: "/#faq", label: "Help" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#types", label: "Real Questions", badge: "NEW" },
+] as const;
+
+export const COMPANY_LOGOS = [
+  "Google",
+  "Meta",
+  "Amazon",
+  "Microsoft",
+  "Apple",
+  "Netflix",
+  "Uber",
+  "Stripe",
+  "Adobe",
+  "Flipkart",
+  "Atlassian",
+  "Salesforce",
+] as const;
+
+export const UNDETECTABLE_FEATURES = [
+  {
+    title: "Invisible on dock",
+    badge: "NEW",
+    body: "The app stays active but never shows an icon, so no one can tell it's running.",
+    kind: "dock" as const,
+  },
+  {
+    title: "Invisible in activity monitor",
+    body: "Runs silently in the background without leaving any trace in Task Manager or Activity Monitor.",
+    kind: "monitor" as const,
+  },
+  {
+    title: "Completely click through",
+    body: "Even when you hover or click, the system won't detect the overlay. No focus shifts. No flags. No traces.",
+    kind: "click" as const,
+  },
+  {
+    title: "100% Invisible to Screen-Recording",
+    body: "Even if the session is recorded, Crack leaves no visible windows or overlays.",
+    kind: "record" as const,
+  },
+] as const;
+
+export const COMPARISON_FEATURES = [
+  {
+    id: "audio",
+    name: "Supports Audio",
+    info: "Captures and transcribes interviewer audio in real-time, so the AI understands spoken questions during live interviews.",
+    us: true,
+    ultra: true,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "dock",
+    name: "Invisible in Dock",
+    info: "The application doesn't appear in your dock or taskbar, so interviewers can't see it during screen shares.",
+    us: true,
+    ultra: true,
+    locked: true,
+    apply: true,
+  },
+  {
+    id: "share",
+    name: "Invisible to Screen Share",
+    info: "The overlay stays hidden when sharing your screen. Interviewers never see the assistance tool.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "tray",
+    name: "Invisible to Tray",
+    info: "No system tray icon. Another detection point, gone.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "monitor",
+    name: "Invisible to System/Activity Monitor",
+    info: "Process name is disguised if someone checks running applications or Task Manager.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "click",
+    name: "Click-through Undetectability",
+    info: "Clicks pass through the overlay to windows underneath, so accidental interactions never reveal it.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "caught",
+    name: "Hasn't Been Caught",
+    info: "Designed to stay out of screen capture, recordings, and process lists when used as intended.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "price",
+    name: "Price",
+    info: "Monthly Pro is $99. Yearly Pro is $999 — less than paying month to month.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+  {
+    id: "browser",
+    name: "Undetectable by Browser",
+    info: "Runs as a desktop overlay outside the browser, so interview-page scripts never see it.",
+    us: true,
+    ultra: true,
+    locked: true,
+    apply: true,
+  },
+  {
+    id: "proof",
+    name: "Has Real Proof From Real Users",
+    info: "Built for the rounds India actually runs — product companies and service companies alike.",
+    us: true,
+    ultra: false,
+    locked: false,
+    apply: false,
+  },
+] as const;
+
+export const TESTIMONIALS = [
+  {
+    quote: "Got Meta and Google callbacks even though I froze on the first DSA round last year.",
+    name: "Anonymous User",
+    role: "Meta, Google",
+    letter: "A",
+    color: "#FFFFFF",
+  },
+  {
+    quote: "Crack helped me secure the Cisco offer. Cleanest live-coding round I've ever had.",
+    name: "Anonymous User",
+    role: "Cisco",
+    letter: "A",
+    color: "#F3EEE6",
+  },
+  {
+    quote: "Used it for my Flipkart interview — the overlay stayed invisible the entire loop.",
+    name: "Anonymous User",
+    role: "Flipkart",
+    letter: "A",
+    color: "#8B5A2B",
+  },
+  {
+    quote: "From failing interviews to a TikTok offer. The screenshot-to-solution flow is instant.",
+    name: "Anonymous User",
+    role: "TikTok",
+    letter: "A",
+    color: "#ff7a59",
+  },
+  {
+    quote: "Got my Apple offer using Crack. Stealth on Zoom was the whole point.",
+    name: "Anonymous User",
+    role: "Apple",
+    letter: "A",
+    color: "#c4c4c4",
+  },
+  {
+    quote: "Landed Uber after two service-company years. Game changing for DSA + LLD.",
+    name: "Anonymous User",
+    role: "Uber",
+    letter: "A",
+    color: "#FFFFFF",
+  },
+  {
+    quote: "Just landed Amazon. The system-design mode actually talks like an interviewer expects.",
+    name: "Anonymous User",
+    role: "Amazon",
+    letter: "A",
+    color: "#ffb347",
+  },
+  {
+    quote: "Got my dream job at Microsoft. The $99 monthly plan was an easy call.",
+    name: "Anonymous User",
+    role: "Microsoft",
+    letter: "A",
+    color: "#F3EEE6",
+  },
+] as const;
+
+export const ACTION_VIDEOS = [
+  { company: "Amazon", tag: "DSA round" },
+  { company: "Snowflake", tag: "System design" },
+  { company: "Oracle", tag: "OA + coding" },
+  { company: "Citadel", tag: "Live coding" },
+  { company: "Roblox", tag: "Full stack" },
+  { company: "IBM", tag: "Fundamentals" },
+  { company: "Capital One", tag: "Behavioral + tech" },
+  { company: "Flipkart", tag: "Machine coding" },
+] as const;
+
+export const INTERVIEW_TYPES = [
+  "System Design",
+  "Behavioral Interview",
+  "Full Stack",
+  "AI/ML",
+  "Consulting",
+  "Data Analyst",
+  "Trading",
+  "PM",
+  "DSA",
+  "LLD",
+  "OA",
+  "Other",
+] as const;
+
+export const OFFER_CARDS = [
+  {
+    company: "Google",
+    role: "SDE-2",
+    field: "Software Engineering",
+    salary: "₹48 LPA",
+    accent: "#4285f4",
+    image: "/offers/offer-google.png?v=202609",
+  },
+  {
+    company: "Meta",
+    role: "ML Engineer",
+    field: "AI / ML",
+    salary: "₹72 LPA",
+    accent: "#0668e1",
+    image: "/offers/offer-meta.png?v=202609",
+  },
+  {
+    company: "Razorpay",
+    role: "Backend Engineer",
+    field: "Fintech",
+    salary: "₹36 LPA",
+    accent: "#072654",
+    image: "/offers/offer-razorpay.png?v=202609",
+  },
+  {
+    company: "Swiggy",
+    role: "Product Manager",
+    field: "Product",
+    salary: "₹42 LPA",
+    accent: "#fc8019",
+    image: "/offers/offer-swiggy.png?v=202609",
+  },
+  {
+    company: "Atlassian",
+    role: "Full Stack Engineer",
+    field: "Full Stack",
+    salary: "₹55 LPA",
+    accent: "#0052cc",
+    image: "/offers/offer-atlassian.png?v=202609",
+  },
+  {
+    company: "Goldman Sachs",
+    role: "Quantitative Analyst",
+    field: "Trading / Quant",
+    salary: "₹65 LPA",
+    accent: "#7399c6",
+    image: "/offers/offer-goldman.png?v=202609",
+  },
+  {
+    company: "PhonePe",
+    role: "Android Engineer",
+    field: "Mobile",
+    salary: "₹38 LPA",
+    accent: "#5f259f",
+    image: "/offers/offer-phonepe.png?v=202609",
+  },
+  {
+    company: "Oracle",
+    role: "Data Engineer",
+    field: "Data",
+    salary: "₹32 LPA",
+    accent: "#c74634",
+    image: "/offers/offer-oracle.png?v=202609",
+  },
+  {
+    company: "Cisco",
+    role: "Site Reliability Engineer",
+    field: "DevOps / SRE",
+    salary: "₹28 LPA",
+    accent: "#049fd9",
+    image: "/offers/offer-cisco.png?v=202609",
+  },
+  {
+    company: "CRED",
+    role: "iOS Engineer",
+    field: "Mobile",
+    salary: "₹40 LPA",
+    accent: "#1a1a1a",
+    image: "/offers/offer-cred.png?v=202609",
+  },
+  {
+    company: "Deloitte",
+    role: "Business Analyst",
+    field: "Consulting",
+    salary: "₹18 LPA",
+    accent: "#86bc25",
+    image: "/offers/offer-deloitte.png?v=202609",
+  },
+  {
+    company: "Uber",
+    role: "System Design Engineer",
+    field: "System Design",
+    salary: "₹50 LPA",
+    accent: "#000000",
+    image: "/offers/offer-uber.png?v=202609",
+  },
+] as const;
+
+export const PLATFORMS = [
+  { n: "001", name: "Microsoft Teams", updated: "2hrs ago" },
+  { n: "002", name: "Zoom", updated: "5hrs ago" },
+  { n: "003", name: "Google Meet", updated: "5hrs ago" },
+  { n: "004", name: "Amazon Chime", updated: "2hrs ago" },
+  { n: "005", name: "Cisco Webex", updated: "18hrs ago" },
+  { n: "006", name: "Lark/Feishu", updated: "15hrs ago" },
+  { n: "007", name: "Hackerrank", updated: "2hrs ago" },
+  { n: "008", name: "CoderPad", updated: "22hrs ago" },
+  { n: "009", name: "Codility", updated: "8hrs ago" },
+] as const;
+
+export const FAQS = [
+  {
+    q: "Is there a free trial?",
+    a: "No timed trial — download the Windows overlay and explore for free with 10 full solves per day. Upgrade anytime for unlimited access.",
+  },
+  {
+    q: "What's the ROI compared to failing interviews?",
+    a: "One missed product-company loop costs months of runway. Crack is priced in credit packs — you spend only on the rounds that are actually on your screen.",
+  },
+  {
+    q: "How much can I save compared to other interview tools?",
+    a: "Typical stealth apps charge more. Crack is $99/month or $999/year — yearly saves you versus paying month to month.",
+  },
+  {
+    q: "What are the undetectability features?",
+    a: "Invisible overlay, click-through, hidden from dock/taskbar, hidden from screen share and recordings, disguised process name, and no browser extension for interview pages to detect.",
+  },
+  {
+    q: "How does screenshot solve work?",
+    a: "A global hotkey captures the coding pad, OA portal, or design prompt. The solve API returns an explanation plus code, billed in input + output token credits.",
+  },
+  {
+    q: "Does it work with Zoom, Teams, and Google Meet?",
+    a: "Yes. Interview platforms share the same screen-share stack. The overlay is kept out of capture so the interviewer sees your IDE — not the copilot.",
+  },
+  {
+    q: "Is it Windows only?",
+    a: "Windows first. That's the overlay we ship today. macOS is on the roadmap.",
+  },
+  {
+    q: "How do credits work?",
+    a: "1 credit = 1 AI token (input + output). A typical DSA capture is a few thousand credits. Checkout packs live on the pricing page; Google login holds the balance.",
+  },
+  {
+    q: "Is there a yearly plan?",
+    a: "Yes. Yearly Pro is $999/year — about two months free compared with $99/month. There is no lifetime plan.",
+  },
+  {
+    q: "What interview types are supported?",
+    a: "DSA, LLD, system design, CS fundamentals, online assessments, service-company rounds, and project deep-dives — English only, screen-based rounds.",
+  },
+] as const;
+
+export const FOOTER_COLUMNS = [
+  {
+    title: "Product",
+    links: [
+      { href: "/#how-it-works", label: "How it works" },
+      { href: "/#proof", label: "Undetectable AI" },
+      { href: "/#types", label: "Interview types" },
+      { href: "/#pricing", label: "Pricing" },
+      { href: "/download", label: "Download" },
+    ],
+  },
+  {
+    title: "Prepare",
+    links: [
+      { href: "/#types", label: "Coding interview" },
+      { href: "/#types", label: "System design" },
+      { href: "/#types", label: "DSA & algorithms" },
+      { href: "/#types", label: "LLD / machine coding" },
+      { href: "/#types", label: "Online assessment" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { href: "/#faq", label: "Help & FAQ" },
+      { href: "/#faq", label: "Refund policy" },
+      { href: "/#faq", label: "Terms of service" },
+      { href: "/login", label: "Account login" },
+    ],
+  },
+  {
+    title: "Get started",
+    links: [
+      { href: "/signup", label: "Try for free" },
+      { href: "/download", label: "Windows app" },
+      { href: "/download", label: "Mac app" },
+      { href: "/#pricing", label: "View plans" },
+    ],
+  },
+] as const;
