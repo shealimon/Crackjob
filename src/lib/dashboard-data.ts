@@ -30,12 +30,12 @@ export type DashboardPayload = {
   } | null;
 };
 
-async function requireUserId() {
+async function requireUserId(): Promise<string> {
   const session = await auth();
   const userId = session?.user?.id?.trim();
   if (!userId) {
     // Cookie may still be present while auth() is empty — clear it or login loops.
-    await clearSessionToLogin();
+    return clearSessionToLogin();
   }
   return userId;
 }
@@ -44,7 +44,7 @@ async function requireUserId() {
 export const getDashboardNavUser = cache(async () => {
   const userId = await requireUserId();
   const raw = await userPublicPayload(userId);
-  if (!raw) await clearSessionToLogin();
+  if (!raw) return clearSessionToLogin();
   return {
     name: raw.name,
     email: raw.email,
@@ -60,11 +60,20 @@ export const getDashboardShell = cache(async () => {
     userPublicPayload(userId),
     getActiveDesktopSession(userId),
   ]);
-  if (!raw) await clearSessionToLogin();
+  if (!raw) return clearSessionToLogin();
 
   const user: DashboardUser = {
-    ...raw,
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    image: raw.image,
+    plan: raw.plan,
     planLabel: planLabel(raw.plan),
+    fullAccess: raw.fullAccess,
+    exploreRemaining: raw.exploreRemaining,
+    solvesToday: raw.solvesToday,
+    endsAt: raw.endsAt,
+    creditBalance: raw.creditBalance,
   };
 
   return {
