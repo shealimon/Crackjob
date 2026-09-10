@@ -72,8 +72,13 @@ export async function userPublicPayload(userId: string) {
     fullAccess: access.fullAccess,
     exploreRemaining: access.exploreRemaining,
     solvesToday: access.solvesToday,
+    answerTier: access.answerTier,
     // Desktop UI still reads this field — map explore remaining for free.
     creditBalance: access.fullAccess ? 999_999 : (access.exploreRemaining ?? 0),
-    creditsLow: !access.fullAccess && (access.exploreRemaining ?? 0) <= 1,
+    creditsLow:
+      !access.fullAccess &&
+      (access.answerTier === "partial" ||
+        access.answerTier === "blocked" ||
+        (access.exploreRemaining ?? 0) <= 1),
   };
 }

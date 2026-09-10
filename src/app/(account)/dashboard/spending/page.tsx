@@ -5,7 +5,7 @@ import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
 
 export default function DashboardSpendingPage() {
   return (
-    <DashboardPanelGate>
+    <DashboardPanelGate requireUsage>
       {(data) => <SpendingPanel initial={data} />}
     </DashboardPanelGate>
   );

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { assertCanSolve, getAccessSnapshot, invalidateAccessCache } from "@/lib/access";
 import { isAuthSkipped, requireUser } from "@/lib/api-auth";
+import { applyFreeAnswerGate, type FreeAnswerTier } from "@/lib/explore-answer";
 import { streamSolve, tokensToCredits, type StreamSolveEvent } from "@/lib/ai";
 import { MODE_IDS } from "@/lib/constants";
 import { recordAiUsage } from "@/lib/credits";
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
           creditBalance: snap?.exploreRemaining ?? 0,
           creditsLow: true,
           exploreLimit: true,
+          upgradeRequired: true,
         },
         { status: 402 },
       );
@@ -75,6 +77,7 @@ export async function POST(request: Request) {
   };
 
   const fullAccess = isAuthSkipped() || access.fullAccess;
+  const answerTier: FreeAnswerTier = fullAccess ? "full" : (access.answerTier ?? "full");
 
   return ndjsonStream(async (send) => {
     // Create usage row in parallel with the model call — never block first tokens on DB.
@@ -89,8 +92,13 @@ export async function POST(request: Request) {
     try {
       for await (const event of streamSolve(solveOptions)) {
         if (event.type === "delta") {
-          // Free quota still gets full answers; limit is daily count only.
-          send({ type: "delta", result: event.result });
+          const gated = applyFreeAnswerGate(event.result, answerTier, false);
+          send({
+            type: "delta",
+            result: gated.result,
+            partialAnswer: gated.partialAnswer,
+            upgradePrompt: gated.upgradePrompt,
+          });
           continue;
         }
 
@@ -101,6 +109,7 @@ export async function POST(request: Request) {
           userId: authed.userId,
           mode: body.data.mode,
           fullAccess,
+          answerTier,
         });
       }
     } catch (error) {
@@ -134,9 +143,11 @@ async function handleSolveDone(
     userId: string;
     mode: string;
     fullAccess: boolean;
+    answerTier: FreeAnswerTier;
   },
 ) {
   const creditsUsed = tokensToCredits(event.inputTokens, event.outputTokens);
+  const gated = applyFreeAnswerGate(event.result, ctx.answerTier, true);
 
   await recordAiUsage({
     id: ctx.jobId,
@@ -158,14 +169,22 @@ async function handleSolveDone(
     demo: event.demo,
     creditsUsed,
     creditBalance: access.fullAccess ? 999_999 : (access.exploreRemaining ?? 0),
-    creditsLow: !access.fullAccess && (access.exploreRemaining ?? 0) <= 1,
+    creditsLow:
+      !access.fullAccess &&
+      (access.answerTier === "partial" ||
+        access.answerTier === "blocked" ||
+        (access.exploreRemaining ?? 0) <= 1),
     fullAccess: access.fullAccess,
     exploreRemaining: access.exploreRemaining,
     solvesToday: access.solvesToday,
+    answerTier: access.answerTier,
+    partialAnswer: gated.partialAnswer,
+    upgradePrompt: gated.upgradePrompt,
+    upgradeRequired: gated.partialAnswer,
     usage: {
       inputTokens: event.inputTokens,
       outputTokens: event.outputTokens,
     },
-    result: event.result,
+    result: gated.result,
   });
 }

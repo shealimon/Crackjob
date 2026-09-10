@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { BrandMark } from "@/components/brand-mark";
 import { NAV_LINKS } from "@/components/landing/data";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const { status } = useSession();
-  const signedIn = status === "authenticated";
 
   return (
     <header className="absolute inset-x-0 top-0 z-50 bg-transparent">
@@ -37,16 +34,16 @@ export function SiteHeader() {
 
         <div className="hidden items-center gap-5 lg:flex">
           <Link
-            href={signedIn ? "/dashboard" : "/login"}
+            href="/login"
             className="font-display text-[16px] font-medium tracking-[-0.01em] text-white/70 transition hover:text-white"
           >
             Login
           </Link>
           <Link
-            href={signedIn ? "/dashboard" : "/signup"}
+            href="/signup"
             className="inline-flex h-10 items-center rounded-full bg-white px-5 font-display text-[14px] font-semibold tracking-[-0.01em] text-[#0b0705] transition hover:bg-[#eaeaeb]"
           >
-            {signedIn ? "Open app" : "Try for Free"}
+            Try for Free
           </Link>
         </div>
 
@@ -86,18 +83,18 @@ export function SiteHeader() {
               </Link>
             ))}
             <Link
-              href={signedIn ? "/dashboard" : "/login"}
+              href="/login"
               onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
             >
               Login
             </Link>
             <Link
-              href={signedIn ? "/dashboard" : "/signup"}
+              href="/signup"
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex h-11 items-center justify-center rounded-full bg-white text-[15px] font-semibold text-[#0b0705]"
             >
-              {signedIn ? "Open app" : "Try for Free"}
+              Try for Free
             </Link>
           </div>
         </div>

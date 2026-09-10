@@ -1,3 +1,17 @@
+import type { Metadata } from "next";
+import { PRODUCT_NAME } from "@/lib/constants";
+
+export const metadata: Metadata = {
+  title: `Download ${PRODUCT_NAME} for Windows`,
+  description: `Download the ${PRODUCT_NAME} Windows app — undetectable AI interview assistant for Zoom, Google Meet, and Teams. Real-time coding interview help hidden from screen share.`,
+  alternates: { canonical: "/download" },
+  openGraph: {
+    title: `Download ${PRODUCT_NAME} — AI Interview App for Windows`,
+    description: `Install ${PRODUCT_NAME} for live technical interviews. Invisible overlay with ChatGPT-style answers for DSA, system design, and more.`,
+    url: "/download",
+  },
+};
+
 export default function DownloadPage() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-5 pb-16 pt-28">

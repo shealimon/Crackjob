@@ -43,7 +43,7 @@ export function SpendingPanel({ initial }: { initial: DashboardPayload }) {
         <h2 className="text-sm font-semibold text-black">On-demand spend</h2>
         <p className="mt-3 text-sm leading-6 text-black/55">
           Paid checkout and usage-based billing via Razorpay will show here once
-          live. Until then, free explore is limited by daily solves.
+          live. Until then, free explore is a one-time limit (not daily).
         </p>
       </section>
     </div>

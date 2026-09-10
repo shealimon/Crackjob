@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { authEmailCallbackUrl } from "@/lib/app-url";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
-import { appBaseUrl } from "@/lib/app-url";
 
 const schema = z.object({
   email: z.string().trim().email().transform((v) => v.toLowerCase()),
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     type: "signup",
     email: body.data.email,
     options: {
-      emailRedirectTo: `${appBaseUrl()}/auth/callback?next=${encodeURIComponent("/login?verified=1")}`,
+      emailRedirectTo: authEmailCallbackUrl("/login?verified=1"),
     },
   });
 

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { auth } from "@/auth";
-import { redirect } from "next/navigation";
+import { clearSessionToLogin } from "@/lib/clear-session-login";
 import { dailyUsageByDay } from "@/lib/credits";
 import { getActiveDesktopSession, userPublicPayload } from "@/lib/desktop-session";
 import { planLabel } from "@/lib/plans";
@@ -34,7 +34,8 @@ async function requireUserId() {
   const session = await auth();
   const userId = session?.user?.id?.trim();
   if (!userId) {
-    redirect("/login?callbackUrl=/dashboard");
+    // Cookie may still be present while auth() is empty — clear it or login loops.
+    await clearSessionToLogin();
   }
   return userId;
 }
@@ -43,7 +44,7 @@ async function requireUserId() {
 export const getDashboardNavUser = cache(async () => {
   const userId = await requireUserId();
   const raw = await userPublicPayload(userId);
-  if (!raw) redirect("/login");
+  if (!raw) await clearSessionToLogin();
   return {
     name: raw.name,
     email: raw.email,
@@ -59,7 +60,7 @@ export const getDashboardShell = cache(async () => {
     userPublicPayload(userId),
     getActiveDesktopSession(userId),
   ]);
-  if (!raw) redirect("/login");
+  if (!raw) await clearSessionToLogin();
 
   const user: DashboardUser = {
     ...raw,

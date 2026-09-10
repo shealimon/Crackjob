@@ -26,14 +26,16 @@ export function UsagePanel({ initial }: { initial: DashboardPayload }) {
           </p>
         </div>
         <div className="rounded-2xl border border-black/8 bg-white p-5">
-          <p className="text-xs text-black/45">Solves today</p>
+          <p className="text-xs text-black/45">
+            {user.fullAccess ? "Solves (recent)" : "Explore used"}
+          </p>
           <p className="mt-2 text-2xl font-semibold text-black">
             {user.solvesToday}
           </p>
         </div>
         <div className="rounded-2xl border border-black/8 bg-white p-5">
           <p className="text-xs text-black/45">
-            {user.fullAccess ? "Access" : "Explore left today"}
+            {user.fullAccess ? "Access" : "Explore left"}
           </p>
           <p className="mt-2 text-2xl font-semibold text-black">
             {user.fullAccess ? "Full" : user.exploreRemaining ?? 0}

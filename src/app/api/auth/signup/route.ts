@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { signupSchema } from "@/lib/auth-credentials";
-import { appBaseUrl } from "@/lib/app-url";
+import { authEmailCallbackUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     password,
     options: {
       data: { name },
-      emailRedirectTo: `${appBaseUrl()}/auth/callback?next=${encodeURIComponent("/login?verified=1")}`,
+      emailRedirectTo: authEmailCallbackUrl("/login?verified=1"),
     },
   });
 

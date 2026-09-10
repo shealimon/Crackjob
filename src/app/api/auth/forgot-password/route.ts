@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { appBaseUrl } from "@/lib/app-url";
+import { authEmailCallbackUrl } from "@/lib/app-url";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 
 const schema = z.object({
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
   const supabase = createSupabaseAnonClient();
   const { error } = await supabase.auth.resetPasswordForEmail(body.data.email, {
-    redirectTo: `${appBaseUrl()}/auth/callback?next=${encodeURIComponent("/reset-password")}`,
+    redirectTo: authEmailCallbackUrl("/reset-password"),
   });
 
   if (error) {

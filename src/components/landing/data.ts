@@ -337,7 +337,7 @@ export const PLATFORMS = [
 export const FAQS = [
   {
     q: "Is there a free trial?",
-    a: "No timed trial — download the Windows overlay and explore for free with 10 full solves per day. Upgrade anytime for unlimited access.",
+    a: "No timed trial — download the Windows overlay and explore for free with 10 full solves plus 5 preview answers (one-time). Upgrade anytime for unlimited access.",
   },
   {
     q: "What's the ROI compared to failing interviews?",
@@ -374,46 +374,5 @@ export const FAQS = [
   {
     q: "What interview types are supported?",
     a: "DSA, LLD, system design, CS fundamentals, online assessments, service-company rounds, and project deep-dives — English only, screen-based rounds.",
-  },
-] as const;
-
-export const FOOTER_COLUMNS = [
-  {
-    title: "Product",
-    links: [
-      { href: "/#how-it-works", label: "How it works" },
-      { href: "/#proof", label: "Undetectable AI" },
-      { href: "/#types", label: "Interview types" },
-      { href: "/#pricing", label: "Pricing" },
-      { href: "/download", label: "Download" },
-    ],
-  },
-  {
-    title: "Prepare",
-    links: [
-      { href: "/#types", label: "Coding interview" },
-      { href: "/#types", label: "System design" },
-      { href: "/#types", label: "DSA & algorithms" },
-      { href: "/#types", label: "LLD / machine coding" },
-      { href: "/#types", label: "Online assessment" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { href: "/#faq", label: "Help & FAQ" },
-      { href: "/#faq", label: "Refund policy" },
-      { href: "/#faq", label: "Terms of service" },
-      { href: "/login", label: "Account login" },
-    ],
-  },
-  {
-    title: "Get started",
-    links: [
-      { href: "/signup", label: "Try for free" },
-      { href: "/download", label: "Windows app" },
-      { href: "/download", label: "Mac app" },
-      { href: "/#pricing", label: "View plans" },
-    ],
   },
 ] as const;

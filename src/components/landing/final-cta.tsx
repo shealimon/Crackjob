@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CrackMark } from "@/components/crack-logo";
-import { AppleIcon, WindowsIcon } from "@/components/landing/icons";
+import { WindowsIcon } from "@/components/landing/icons";
 import { SectionEyebrow } from "@/components/landing/ui";
 
 function CtaButton({
@@ -64,9 +64,6 @@ export function FinalCta() {
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <CtaButton href="/download" icon={<WindowsIcon className="size-4" />}>
             Get for Windows
-          </CtaButton>
-          <CtaButton href="/download" icon={<AppleIcon className="size-4" />}>
-            Get for Mac
           </CtaButton>
         </div>
       </div>

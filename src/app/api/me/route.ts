@@ -20,7 +20,8 @@ export async function GET(request: Request) {
 
   const user = await userPublicPayload(authed.userId);
   if (!user) {
-    return json({ error: "User not found" }, { status: 404 });
+    // Stale JWT after DB delete — treat as signed out (client clears session).
+    return json({ error: "Not signed in" }, { status: 401 });
   }
 
   const [desktop, usageByDay, profile] = await Promise.all([

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { DashboardDataProvider } from "@/components/dashboard/dashboard-data";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { getDashboardShell } from "@/lib/dashboard-data";
+
+/** Private account area — keep out of Google index. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function DashboardLayout({
   children,

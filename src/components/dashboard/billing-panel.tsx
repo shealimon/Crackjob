@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PLAN_PACKS } from "@/lib/constants";
 import type { DashboardPayload } from "@/lib/dashboard-data";
+import { FREE_EXPLORE_SOLVES, FREE_FULL_SOLVES, FREE_PARTIAL_SOLVES } from "@/lib/plans";
 
 export function BillingPanel({ initial }: { initial: DashboardPayload }) {
   const { user } = initial;
@@ -26,7 +27,7 @@ export function BillingPanel({ initial }: { initial: DashboardPayload }) {
                 ? user.endsAt
                   ? `Renews / ends ${new Date(user.endsAt).toLocaleDateString("en-IN")}`
                   : "Full access"
-                : `Free explore — ${user.exploreRemaining ?? 0} solves left today`}
+                : `Free explore — ${user.exploreRemaining ?? 0} of ${FREE_EXPLORE_SOLVES} left (${FREE_FULL_SOLVES} full + ${FREE_PARTIAL_SOLVES} preview · one-time)`}
             </p>
           </div>
           {!user.fullAccess ? (

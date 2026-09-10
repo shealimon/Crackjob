@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppleIcon, WindowsIcon } from "@/components/landing/icons";
+import { WindowsIcon } from "@/components/landing/icons";
 
 function SparkIcon({ className }: { className?: string }) {
   return (
@@ -43,13 +43,6 @@ export function Hero() {
           >
             <WindowsIcon className="size-4" />
             Download for Windows
-          </Link>
-          <Link
-            href="/download"
-            className="inline-flex h-14 items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-8 text-[16px] font-semibold text-white transition hover:scale-[1.02] hover:bg-white/[0.07] active:scale-[0.98]"
-          >
-            <AppleIcon className="size-4" />
-            Download for Mac
           </Link>
         </div>
 

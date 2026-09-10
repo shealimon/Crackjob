@@ -4,8 +4,21 @@ export type SubscriptionPlan = (typeof SUBSCRIPTION_PLANS)[number];
 
 export const PAID_PLANS: SubscriptionPlan[] = ["month_1", "month_3", "year"];
 
-/** Free explore: max full solves per calendar day (UTC). Temporarily 100 for development. */
-export const FREE_DAILY_SOLVES = 100;
+/**
+ * Free explore is a one-time lifetime quota (not daily):
+ * first N answers full, next M half+upgrade, then permanently blocked until upgrade.
+ */
+export const FREE_FULL_SOLVES = 10;
+export const FREE_PARTIAL_SOLVES = 5;
+export const FREE_EXPLORE_SOLVES = FREE_FULL_SOLVES + FREE_PARTIAL_SOLVES;
+/** @deprecated Use FREE_EXPLORE_SOLVES — quota is lifetime, not daily. */
+export const FREE_DAILY_SOLVES = FREE_EXPLORE_SOLVES;
+
+export const FREE_PARTIAL_UPGRADE_MSG =
+  "Preview only — upgrade for the full answer and unlimited solves.";
+
+export const FREE_LIMIT_UPGRADE_MSG =
+  "Free explore limit reached.\nUpgrade for Unlimited Access.";
 
 export function isPaidPlan(plan: string): plan is Exclude<SubscriptionPlan, "free"> {
   return PAID_PLANS.includes(plan as Exclude<SubscriptionPlan, "free">);

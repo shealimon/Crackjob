@@ -35,7 +35,7 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
       done: data.user.solvesToday > 0 || data.user.fullAccess,
       body: data.user.fullAccess
         ? "You have full access — use the overlay during interviews."
-        : `${data.user.exploreRemaining ?? 0} free solves left today.`,
+        : `${data.user.exploreRemaining ?? 0} free solves left (10 full + 5 preview · one-time).`,
       href: "/download",
       cta: "Get started",
     },
@@ -195,7 +195,7 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
               ? data.user.endsAt
                 ? `Full access until ${new Date(data.user.endsAt).toLocaleDateString("en-IN")}`
                 : "Full access"
-              : `Free explore — ${data.user.exploreRemaining ?? 0} solves left today (${data.user.solvesToday} used)`}
+              : `Free explore — ${data.user.exploreRemaining ?? 0} left (${data.user.solvesToday} used · 10 full + 5 preview · one-time)`}
           </p>
         </div>
 

@@ -77,30 +77,30 @@ export function LoginForm() {
     setPending(true);
 
     try {
-      // Use Auth.js so session cookies match middleware + auth() exactly.
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-        callbackUrl,
+      // One-shot login — skips Auth.js providers/CSRF/callback/session round-trips.
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        code?: string;
+        error?: string;
+      } | null;
 
-      if (!result || result.error) {
+      if (!res.ok) {
         setPending(false);
-        const code = (result as { code?: string } | undefined)?.code ?? result?.error;
-        if (
-          code === "email_not_verified" ||
-          String(code).toLowerCase().includes("email_not_verified")
-        ) {
+        if (data?.code === "email_not_verified") {
           setNeedsResend(true);
           toast("Verify your email before signing in.", "error");
           return;
         }
-        toast("Invalid email or password.", "error");
+        toast(data?.error ?? "Invalid email or password.", "error");
         return;
       }
 
-      window.location.assign(result.url || callbackUrl);
+      window.location.assign(callbackUrl);
     } catch {
       setPending(false);
       toast("Could not start a session. Try again.", "error");

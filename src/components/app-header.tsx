@@ -59,7 +59,7 @@ export function AppHeader() {
 
         <div className="hidden items-center gap-5 lg:flex">
           <Link
-            href={signedIn ? "/dashboard" : "/login"}
+            href="/login"
             className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
           >
             Login
@@ -120,7 +120,7 @@ export function AppHeader() {
               </Link>
             ))}
             <Link
-              href={signedIn ? "/dashboard" : "/login"}
+              href="/login"
               onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
             >

@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { signOut } from "next-auth/react";
 import type { DashboardPayload } from "@/lib/dashboard-data";
 import { planLabel } from "@/lib/plans";
 
@@ -52,16 +53,20 @@ export function DashboardDataProvider({
   }, []);
 
   useEffect(() => {
+    // SSR shell already has user + desktop — don't block overview with /api/me.
+    // Usage/spending pages call refresh() when they need the 14-day series.
+    if (initial) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
         const res = await fetch("/api/me", { cache: "no-store" });
         if (cancelled) return;
         if (res.status === 401) {
-          // Keep SSR shell if present; only bounce when we have no session data.
-          if (!initial) {
-            window.location.assign("/login?callbackUrl=/dashboard");
-          }
+          await signOut({ callbackUrl: "/login" });
           return;
         }
         if (!res.ok) return;

@@ -3,11 +3,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { sessionTokenCookieName } from "@/lib/session-cookie";
 
-function safeCallbackUrl(value: string | null): string {
-  if (!value?.startsWith("/") || value.startsWith("//")) return "/dashboard";
-  return value;
-}
-
 function canonicalHostRedirect(req: NextRequest): NextResponse | null {
   const raw = process.env.AUTH_URL?.trim();
   if (!raw || /localhost|127\.0\.0\.1/i.test(raw)) return null;
@@ -27,10 +22,17 @@ function canonicalHostRedirect(req: NextRequest): NextResponse | null {
   }
 }
 
-/** Try both cookie variants (Secure / non-Secure) so AUTH_URL mismatches don't bounce users. */
+/** Prefer the cookie variant this deploy actually sets; fall back once for AUTH_URL mismatches. */
 async function readSessionToken(req: NextRequest) {
   const secret = process.env.AUTH_SECRET?.trim().replace(/^["']|["']$/g, "");
-  for (const secureCookie of [true, false] as const) {
+  const preferSecure =
+    process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+  const order = preferSecure ? ([true, false] as const) : ([false, true] as const);
+  // On Vercel only the Secure cookie exists — skip the empty non-Secure decode.
+  const variants =
+    process.env.VERCEL === "1" ? ([true] as const) : order;
+
+  for (const secureCookie of variants) {
     const cookieName = sessionTokenCookieName(secureCookie);
     const token = await getToken({
       req,
@@ -49,17 +51,21 @@ export async function middleware(req: NextRequest) {
   if (canonical) return canonical;
 
   const { pathname, search } = req.nextUrl;
-  const token = await readSessionToken(req);
-  const isLoggedIn = Boolean(token);
   const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isProtected =
     pathname.startsWith("/dashboard") || pathname.startsWith("/auth/desktop");
 
-  // Already signed in — skip login/signup UI entirely (no flash).
-  if (isLoggedIn && isAuthPage) {
-    const dest = safeCallbackUrl(req.nextUrl.searchParams.get("callbackUrl"));
-    return NextResponse.redirect(new URL(dest, req.nextUrl.origin));
+  // Marketing + API routes don't need a JWT decode on every request.
+  if (!isAuthPage && !isProtected) {
+    return NextResponse.next();
   }
+
+  const token = await readSessionToken(req);
+  const isLoggedIn = Boolean(token);
+
+  // Do NOT auto-skip /login|/signup based on JWT alone — the cookie can outlive
+  // a deleted DB user. Login/signup pages verify the user still exists, then
+  // either go to dashboard or clear the stale session and stay on the form.
 
   if (!isLoggedIn && isProtected) {
     const login = new URL("/login", req.nextUrl.origin);

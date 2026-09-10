@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import {
-  FREE_DAILY_SOLVES,
+  freeAnswerTier,
+  type FreeAnswerTier,
+} from "@/lib/explore-answer";
+import {
+  FREE_EXPLORE_SOLVES,
+  FREE_LIMIT_UPGRADE_MSG,
   isPaidPlan,
   type SubscriptionPlan,
 } from "@/lib/plans";
@@ -11,13 +16,16 @@ export type AccessSnapshot = {
   status: string;
   endsAt: Date | null;
   fullAccess: boolean;
+  /** Remaining lifetime free explore solves (full + partial). Null when paid. */
   exploreRemaining: number | null;
+  /**
+   * Explore solves already used (lifetime, accessLevel=explore).
+   * Field name kept for API compatibility with the desktop app.
+   */
   solvesToday: number;
+  /** Tier for the next solve. Null when paid / full access. */
+  answerTier: FreeAnswerTier | null;
 };
-
-function startOfUtcDay(d = new Date()) {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
 
 /** Avoid a DB round-trip on every Ctrl+Enter (was adding hundreds of ms before OpenAI). */
 const ACCESS_CACHE_TTL_MS = 20_000;
@@ -37,7 +45,7 @@ export async function getAccessSnapshot(userId: string): Promise<AccessSnapshot>
     return cached.access;
   }
 
-  // Subscription first — paid users skip the daily count query (saves a DB round-trip on every solve).
+  // Subscription first — paid users skip the explore count query.
   const sub = await prisma.subscription.findUnique({ where: { userId } });
 
   const plan = sub?.plan ?? "free";
@@ -59,25 +67,28 @@ export async function getAccessSnapshot(userId: string): Promise<AccessSnapshot>
       fullAccess: true,
       exploreRemaining: null,
       solvesToday: 0,
+      answerTier: null,
     };
   } else {
-    const solvesToday = await prisma.aiUsage.count({
+    // Lifetime free quota — only count explore-tier solves (paid usage must not burn free allotment).
+    const exploreUsed = await prisma.aiUsage.count({
       where: {
         userId,
         status: "done",
-        createdAt: { gte: startOfUtcDay() },
+        accessLevel: "explore",
       },
     });
 
-    // Expired paid → treat as free explore
+    // Expired paid → treat as free explore (lifetime remaining)
     access = {
       userId,
       plan: "free",
       status: "active",
       endsAt: null,
       fullAccess: false,
-      exploreRemaining: Math.max(0, FREE_DAILY_SOLVES - solvesToday),
-      solvesToday,
+      exploreRemaining: Math.max(0, FREE_EXPLORE_SOLVES - exploreUsed),
+      solvesToday: exploreUsed,
+      answerTier: freeAnswerTier(exploreUsed),
     };
   }
 
@@ -88,10 +99,8 @@ export async function getAccessSnapshot(userId: string): Promise<AccessSnapshot>
 export async function assertCanSolve(userId: string) {
   const access = await getAccessSnapshot(userId);
   if (access.fullAccess) return access;
-  if ((access.exploreRemaining ?? 0) <= 0) {
-    const err = new Error(
-      `Daily free limit reached (${FREE_DAILY_SOLVES}/day). Upgrade for unlimited access.`,
-    );
+  if (access.answerTier === "blocked" || (access.exploreRemaining ?? 0) <= 0) {
+    const err = new Error(FREE_LIMIT_UPGRADE_MSG);
     (err as Error & { code?: string }).code = "EXPLORE_LIMIT";
     throw err;
   }
