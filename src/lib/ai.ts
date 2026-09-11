@@ -343,9 +343,11 @@ function buildAnswerUserText(options: SolveOptions, question: string) {
       `${options.conversationContext.trim()}
 
 FOLLOW-UP RULES for the new question below:
+- Answer ONLY the latest question text. Do not re-solve or paraphrase a previous question.
 - If it continues the prior thread (other/another approach, optimize, edge case, complexity, code, dry run, "what if", same problem), answer ONLY the new ask using the prior Q&A — do NOT restart or repeat the same solution.
 - If they ask for another approach/solution, give a DIFFERENT valid approach with code/complexity as needed — not a paraphrase of the previous answer.
-- If the new ask is a clearly unrelated topic, ignore the prior Q&A completely.`,
+- If the new ask is a clearly unrelated topic, ignore the prior Q&A completely and answer the new question on its own.
+- Sound like a real candidate speaking in the interview — natural, first-person, and concise.`,
     );
   }
 

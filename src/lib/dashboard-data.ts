@@ -48,7 +48,10 @@ export const getDashboardNavUser = cache(async () => {
   return {
     name: raw.name,
     email: raw.email,
-    planLabel: planLabel(raw.plan),
+    planLabel:
+      !raw.fullAccess && raw.planStatus === "expired"
+        ? `${planLabel(raw.plan)} (ended)`
+        : planLabel(raw.plan),
     fullAccess: raw.fullAccess,
   };
 });
@@ -68,7 +71,10 @@ export const getDashboardShell = cache(async () => {
     email: raw.email,
     image: raw.image,
     plan: raw.plan,
-    planLabel: planLabel(raw.plan),
+    planLabel:
+      !raw.fullAccess && raw.planStatus === "expired"
+        ? `${planLabel(raw.plan)} (ended)`
+        : planLabel(raw.plan),
     fullAccess: raw.fullAccess,
     exploreRemaining: raw.exploreRemaining,
     solvesToday: raw.solvesToday,

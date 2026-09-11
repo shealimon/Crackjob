@@ -1,12 +1,4 @@
-"use client";
-
-import { BillingPanel } from "@/components/dashboard/billing-panel";
-import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
-
+/** Segment marker — panel UI is rendered by `DashboardView` in the layout. */
 export default function DashboardBillingPage() {
-  return (
-    <DashboardPanelGate>
-      {(data) => <BillingPanel initial={data} />}
-    </DashboardPanelGate>
-  );
+  return null;
 }

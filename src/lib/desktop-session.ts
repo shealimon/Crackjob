@@ -52,7 +52,10 @@ export async function getDesktopSessionByToken(token: string) {
   });
 }
 
-export async function userPublicPayload(userId: string) {
+export async function userPublicPayload(
+  userId: string,
+  options?: { fresh?: boolean },
+) {
   if (!userId?.trim()) return null;
 
   const [user, access] = await Promise.all([
@@ -60,7 +63,8 @@ export async function userPublicPayload(userId: string) {
       where: { id: userId },
       select: { id: true, name: true, email: true },
     }),
-    getAccessSnapshot(userId),
+    // Login / session restore must not use a stale free→paid cache entry.
+    getAccessSnapshot(userId, { fresh: options?.fresh ?? true }),
   ]);
   if (!user) return null;
   return {

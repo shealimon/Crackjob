@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DashboardDataProvider } from "@/components/dashboard/dashboard-data";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
+import { DashboardNavProvider } from "@/components/dashboard/nav";
 import { DashboardShell } from "@/components/dashboard/shell";
 import { getDashboardShell } from "@/lib/dashboard-data";
 
@@ -22,16 +24,23 @@ export default async function DashboardLayout({
 
   return (
     <DashboardDataProvider initial={initial}>
-      <DashboardShell
-        user={{
-          name: shell.user.name,
-          email: shell.user.email,
-          planLabel: shell.user.planLabel,
-          fullAccess: shell.user.fullAccess,
-        }}
-      >
+      <DashboardNavProvider>
+        <DashboardShell
+          user={{
+            name: shell.user.name,
+            email: shell.user.email,
+            planLabel: shell.user.planLabel,
+            fullAccess: shell.user.fullAccess,
+          }}
+        >
+          {/* Client-switched panels — instant menu nav; route pages stay for deep links. */}
+          <DashboardView />
+        </DashboardShell>
+      </DashboardNavProvider>
+      {/* Register App Router segments without blocking the shell UI. */}
+      <div className="hidden" aria-hidden>
         {children}
-      </DashboardShell>
+      </div>
     </DashboardDataProvider>
   );
 }

@@ -550,6 +550,10 @@ body {
   color: #0a0a0a;
 }
 
+.dashboard-light .dash-brand span {
+  color: inherit;
+}
+
 .dashboard-light .dash-brand .text-accent {
   color: #9a6b45;
 }

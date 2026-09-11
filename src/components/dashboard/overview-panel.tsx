@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AppDownloadLink } from "@/components/app-download-link";
+import { useDashboardNav } from "@/components/dashboard/nav";
 import { LoadingButton } from "@/components/loading-button";
 import { useToast } from "@/components/toast";
-import { PLAN_PACKS } from "@/lib/constants";
+import { PLAN_PACKS, WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 import type { DashboardPayload } from "@/lib/dashboard-data";
 
 export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
   const { toast } = useToast();
+  const { go } = useDashboardNav();
   const [data, setData] = useState(initial);
   const [busy, setBusy] = useState(false);
 
@@ -18,16 +21,18 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
       title: "Download the Windows app",
       done: false,
       body: "Install Crack on Windows. The website is only for plan and usage.",
-      href: "/download",
+      href: WINDOWS_APP_DOWNLOAD_URL,
       cta: "Download",
+      fileDownload: true,
     },
     {
       id: "desktop",
       title: "Sign in on desktop",
       done: Boolean(data.desktopSession),
       body: "Open the app and sign in with the same email. It stays logged in for interviews.",
-      href: "/download",
+      href: WINDOWS_APP_DOWNLOAD_URL,
       cta: data.desktopSession ? "Connected" : "Open download",
+      fileDownload: true,
     },
     {
       id: "try",
@@ -36,8 +41,9 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
       body: data.user.fullAccess
         ? "You have full access — use the overlay during interviews."
         : `${data.user.exploreRemaining ?? 0} free solves left (10 full + 5 preview · one-time).`,
-      href: "/download",
+      href: WINDOWS_APP_DOWNLOAD_URL,
       cta: "Get started",
+      fileDownload: true,
     },
     {
       id: "plan",
@@ -46,6 +52,7 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
       body: "Unlock full answers with 1 month, 3 months, or yearly.",
       href: "/dashboard/billing",
       cta: data.user.fullAccess ? "View plan" : "See billing",
+      fileDownload: false,
     },
   ];
 
@@ -125,12 +132,18 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
                         <span className="block text-sm leading-6 text-black/55">
                           {step.body}
                         </span>
-                        <Link
-                          href={step.href}
-                          className="inline-flex rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-black/85"
-                        >
-                          {step.cta}
-                        </Link>
+                        {step.fileDownload ? (
+                          <AppDownloadLink className="inline-flex rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-black/85">
+                            {step.cta}
+                          </AppDownloadLink>
+                        ) : (
+                          <Link
+                            href={step.href}
+                            className="inline-flex rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-black/85"
+                          >
+                            {step.cta}
+                          </Link>
+                        )}
                       </span>
                     ) : null}
                   </span>
@@ -171,6 +184,10 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
               <p className="mt-2 text-sm leading-6 text-black/55">{pack.note}</p>
               <Link
                 href="/dashboard/billing"
+                onClick={(event) => {
+                  event.preventDefault();
+                  go("/dashboard/billing");
+                }}
                 className={`mt-5 inline-flex w-full items-center justify-center rounded-lg px-3.5 py-2.5 text-[13px] font-semibold ${
                   current
                     ? "border border-black/15 text-black hover:bg-black/[0.03]"
@@ -228,12 +245,9 @@ export function OverviewPanel({ initial }: { initial: DashboardPayload }) {
               <p className="mt-2 text-sm leading-6 text-black/55">
                 Sign in once in the Windows app with the same email.
               </p>
-              <Link
-                href="/download"
-                className="mt-4 inline-flex rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-black/85"
-              >
+              <AppDownloadLink className="mt-4 inline-flex rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white hover:bg-black/85">
                 Download app
-              </Link>
+              </AppDownloadLink>
             </>
           )}
         </div>

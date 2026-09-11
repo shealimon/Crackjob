@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { BrandMark } from "@/components/brand-mark";
 import { NAV_LINKS } from "@/components/landing/data";
 
@@ -22,6 +23,14 @@ function DownloadArrow({ className = "size-3.5" }: { className?: string }) {
   );
 }
 
+const AUTH_PATHS = new Set([
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+]);
+
 export function AppHeader() {
   const pathname = usePathname();
   const { data, status } = useSession();
@@ -33,10 +42,23 @@ export function AppHeader() {
     return null;
   }
 
+  // Login / signup / auth flows: logo only (home link) — no marketing menus.
+  if (AUTH_PATHS.has(pathname)) {
+    return (
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center px-5 md:px-8">
+          <Link href="/" className="relative z-10 shrink-0" aria-label="Go to home">
+            <BrandMark compact />
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
-        <Link href="/" onClick={() => setOpen(false)} className="relative z-10 shrink-0">
+        <Link href="/" onClick={() => setOpen(false)} className="relative z-10 shrink-0" aria-label="Go to home">
           <BrandMark compact />
         </Link>
 
@@ -75,13 +97,10 @@ export function AppHeader() {
               {firstName ?? "Sign out"}
             </button>
           ) : null}
-          <Link
-            href="/download"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent px-5 font-display text-[13px] font-semibold tracking-[-0.01em] text-on-accent transition hover:bg-accent-hover"
-          >
+          <AppDownloadLink className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent px-5 font-display text-[13px] font-semibold tracking-[-0.01em] text-on-accent transition hover:bg-accent-hover">
             Download for free
             <DownloadArrow />
-          </Link>
+          </AppDownloadLink>
         </div>
 
         <button
@@ -126,14 +145,13 @@ export function AppHeader() {
             >
               Login
             </Link>
-            <Link
-              href="/download"
+            <AppDownloadLink
               onClick={() => setOpen(false)}
               className="mt-2 inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent text-[15px] font-semibold text-on-accent"
             >
               Download for free
               <DownloadArrow />
-            </Link>
+            </AppDownloadLink>
           </div>
         </div>
       ) : null}

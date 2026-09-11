@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { CrackMark } from "@/components/crack-logo";
 import { WindowsIcon } from "@/components/landing/icons";
 import { SectionEyebrow } from "@/components/landing/ui";
+import { WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 
 function CtaButton({
   href,
@@ -13,15 +15,22 @@ function CtaButton({
   icon: ReactNode;
   children: ReactNode;
 }) {
-  return (
-    <Link
-      href={href}
-      className="group inline-flex h-[52px] items-center gap-2.5 rounded-full bg-accent py-1 pl-1 pr-6 text-[15px] font-semibold tracking-[-0.01em] text-on-accent transition hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
-    >
+  const className =
+    "group inline-flex h-[52px] items-center gap-2.5 rounded-full bg-accent py-1 pl-1 pr-6 text-[15px] font-semibold tracking-[-0.01em] text-on-accent transition hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]";
+  const inner = (
+    <>
       <span className="grid size-[44px] shrink-0 place-items-center rounded-full bg-chocolate text-white">
         {icon}
       </span>
       {children}
+    </>
+  );
+  if (href === WINDOWS_APP_DOWNLOAD_URL) {
+    return <AppDownloadLink className={className}>{inner}</AppDownloadLink>;
+  }
+  return (
+    <Link href={href} className={className}>
+      {inner}
     </Link>
   );
 }
@@ -62,7 +71,7 @@ export function FinalCta() {
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <CtaButton href="/download" icon={<WindowsIcon className="size-4" />}>
+          <CtaButton href={WINDOWS_APP_DOWNLOAD_URL} icon={<WindowsIcon className="size-4" />}>
             Get for Windows
           </CtaButton>
         </div>

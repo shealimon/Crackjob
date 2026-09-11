@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { CrackLogo } from "@/components/crack-logo";
+import { WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 
 export function GoldButton({
   href,
@@ -14,13 +16,11 @@ export function GoldButton({
   size?: "sm" | "lg";
 }) {
   const large = size === "lg";
-  return (
-    <Link
-      href={href}
-      className={`group inline-flex items-center rounded-full bg-accent font-semibold text-on-accent transition hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] ${
-        large ? "h-[46px] gap-1.5 py-1 pl-1 pr-4 text-[15px]" : "h-[38px] gap-1.5 py-1 pl-1 pr-4 text-[13px]"
-      }`}
-    >
+  const className = `group inline-flex items-center rounded-full bg-accent font-semibold text-on-accent transition hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] ${
+    large ? "h-[46px] gap-1.5 py-1 pl-1 pr-4 text-[15px]" : "h-[38px] gap-1.5 py-1 pl-1 pr-4 text-[13px]"
+  }`;
+  const inner = (
+    <>
       <span
         className={`grid shrink-0 place-items-center rounded-full bg-chocolate text-white ${
           large ? "size-[38px]" : "size-[30px]"
@@ -29,6 +29,14 @@ export function GoldButton({
         {icon}
       </span>
       {children}
+    </>
+  );
+  if (href === WINDOWS_APP_DOWNLOAD_URL) {
+    return <AppDownloadLink className={className}>{inner}</AppDownloadLink>;
+  }
+  return (
+    <Link href={href} className={className}>
+      {inner}
     </Link>
   );
 }

@@ -20,12 +20,37 @@ export const FREE_PARTIAL_UPGRADE_MSG =
 export const FREE_LIMIT_UPGRADE_MSG =
   "Free explore limit reached.\nUpgrade for Unlimited Access.";
 
+/** Map common aliases / typos → canonical plan ids used in DB + access checks. */
+export function normalizePlan(plan: string | null | undefined): string {
+  const raw = (plan ?? "free").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const aliases: Record<string, string> = {
+    monthly: "month_1",
+    month: "month_1",
+    "1_month": "month_1",
+    month1: "month_1",
+    "1month": "month_1",
+    pro_monthly: "month_1",
+    quarterly: "month_3",
+    "3_month": "month_3",
+    "3_months": "month_3",
+    month3: "month_3",
+    "3month": "month_3",
+    pro_quarterly: "month_3",
+    yearly: "year",
+    annual: "year",
+    annually: "year",
+    pro_yearly: "year",
+    pro: "year",
+  };
+  return aliases[raw] ?? raw;
+}
+
 export function isPaidPlan(plan: string): plan is Exclude<SubscriptionPlan, "free"> {
-  return PAID_PLANS.includes(plan as Exclude<SubscriptionPlan, "free">);
+  return PAID_PLANS.includes(normalizePlan(plan) as Exclude<SubscriptionPlan, "free">);
 }
 
 export function planLabel(plan: string): string {
-  switch (plan) {
+  switch (normalizePlan(plan)) {
     case "month_1":
       return "1 month";
     case "month_3":

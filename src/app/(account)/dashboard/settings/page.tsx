@@ -1,12 +1,4 @@
-"use client";
-
-import { SettingsPanel } from "@/components/dashboard/settings-panel";
-import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
-
+/** Segment marker — panel UI is rendered by `DashboardView` in the layout. */
 export default function DashboardSettingsPage() {
-  return (
-    <DashboardPanelGate>
-      {(data) => <SettingsPanel initial={data} />}
-    </DashboardPanelGate>
-  );
+  return null;
 }

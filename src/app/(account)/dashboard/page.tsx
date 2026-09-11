@@ -1,12 +1,4 @@
-"use client";
-
-import { OverviewPanel } from "@/components/dashboard/overview-panel";
-import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
-
+/** Segment marker — panel UI is rendered by `DashboardView` in the layout. */
 export default function DashboardOverviewPage() {
-  return (
-    <DashboardPanelGate>
-      {(data) => <OverviewPanel initial={data} />}
-    </DashboardPanelGate>
-  );
+  return null;
 }

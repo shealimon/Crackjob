@@ -12,8 +12,8 @@ export default function VerifyEmailPage() {
         </h1>
         <p className="mt-4 text-sm leading-6 text-muted">
           Verification is sent by <strong>Supabase Auth</strong> (your project SMTP).
-          Open the link in that email — it will return here and confirm your
-          account.
+          Open the link in that email — it confirms your account and updates
+          verification, then sends you to sign in.
         </p>
         <p className="mt-6 text-sm text-muted">
           <Link href="/login" className="font-semibold text-foreground hover:text-accent">

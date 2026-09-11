@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { WindowsIcon } from "@/components/landing/icons";
 
 function SparkIcon({ className }: { className?: string }) {
@@ -37,13 +37,10 @@ export function Hero() {
         </p>
 
         <div className="hero-enter hero-enter-4 mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/download"
-            className="btn-meet inline-flex h-14 items-center gap-2 rounded-full px-8 text-[16px] font-semibold transition hover:scale-[1.02] active:scale-[0.98]"
-          >
+          <AppDownloadLink className="btn-meet inline-flex h-14 items-center gap-2 rounded-full px-8 text-[16px] font-semibold transition hover:scale-[1.02] active:scale-[0.98]">
             <WindowsIcon className="size-4" />
             Download for Windows
-          </Link>
+          </AppDownloadLink>
         </div>
 
         <p className="hero-enter hero-enter-5 mt-8 inline-flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/55">

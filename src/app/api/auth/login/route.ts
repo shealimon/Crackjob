@@ -1,7 +1,6 @@
 import { encode } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import { loginSchema } from "@/lib/auth-credentials";
-import { prisma } from "@/lib/prisma";
 import {
   sessionTokenCookieName,
   sessionTokenCookieOptions,
@@ -11,12 +10,6 @@ import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days (Auth.js default)
-
-function metaName(authUser: { user_metadata?: Record<string, unknown> }) {
-  return typeof authUser.user_metadata?.name === "string"
-    ? authUser.user_metadata.name
-    : null;
-}
 
 /** One-shot email/password login — avoids Auth.js CSRF + callback round-trips. */
 export async function POST(req: Request) {
@@ -48,50 +41,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, code: "email_not_verified" }, { status: 403 });
   }
 
-  const authUser = data.user;
-  const email = authUser.email!.toLowerCase();
-  const name = metaName(authUser);
+  // Always sync — signup leaves emailVerified null until confirm; do not skip for existing rows.
+  const user = await syncPrismaUserFromSupabase(data.user);
   const secure = useSecureAuthCookies(req);
   const cookieName = sessionTokenCookieName(secure);
 
-  // Overlap Prisma lookup with JWT encode (same id for normal users).
-  const [existing, encoded] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: authUser.id },
-      select: { id: true, email: true, name: true },
-    }),
-    encode({
-      token: {
-        id: authUser.id,
-        sub: authUser.id,
-        email,
-        name,
-        picture: null,
-      },
-      secret,
-      salt: cookieName,
-      maxAge: SESSION_MAX_AGE,
-    }),
-  ]);
-
-  let sessionToken = encoded;
-  if (!existing) {
-    const user = await syncPrismaUserFromSupabase(authUser);
-    if (user.id !== authUser.id) {
-      sessionToken = await encode({
-        token: {
-          id: user.id,
-          sub: user.id,
-          email: user.email,
-          name: user.name,
-          picture: null,
-        },
-        secret,
-        salt: cookieName,
-        maxAge: SESSION_MAX_AGE,
-      });
-    }
-  }
+  const sessionToken = await encode({
+    token: {
+      id: user.id,
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      picture: null,
+    },
+    secret,
+    salt: cookieName,
+    maxAge: SESSION_MAX_AGE,
+  });
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(cookieName, sessionToken, {

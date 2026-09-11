@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { BrandMark } from "@/components/brand-mark";
-import { PRODUCT_NAME } from "@/lib/constants";
+import { PRODUCT_NAME, WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 
 const FOOTER_LINKS = [
   { href: "/#pricing", label: "Pricing" },
-  { href: "/download", label: "Download" },
+  { href: WINDOWS_APP_DOWNLOAD_URL, label: "Download", download: true },
   { href: "/#faq", label: "Help" },
   { href: "/login", label: "Login" },
 ] as const;
@@ -23,15 +24,24 @@ export function SiteFooter() {
             <BrandMark />
           </Link>
           <nav className="flex flex-wrap gap-x-6 gap-y-3">
-            {FOOTER_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-[13px] text-[#a2a3a6] transition hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {FOOTER_LINKS.map((link) =>
+              "download" in link && link.download ? (
+                <AppDownloadLink
+                  key={link.href}
+                  className="text-[13px] text-[#a2a3a6] transition hover:text-white"
+                >
+                  {link.label}
+                </AppDownloadLink>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-[13px] text-[#a2a3a6] transition hover:text-white"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </nav>
         </div>
 

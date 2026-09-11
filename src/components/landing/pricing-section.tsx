@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { SectionEyebrow } from "@/components/landing/ui";
+import { WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 
 const FREE_BULLETS = [
   "Download and explore the app",
@@ -76,13 +78,11 @@ function PlanButton({
   variant: "free" | "paid";
 }) {
   const free = variant === "free";
-  return (
-    <Link
-      href={href}
-      className={`mt-auto inline-flex h-[48px] w-full items-center gap-2 rounded-full py-1 pl-1 pr-5 font-display text-[15px] font-semibold transition hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] ${
-        free ? "bg-white text-[#0b0705]" : "bg-accent text-on-accent"
-      }`}
-    >
+  const className = `mt-auto inline-flex h-[48px] w-full items-center gap-2 rounded-full py-1 pl-1 pr-5 font-display text-[15px] font-semibold transition hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] ${
+    free ? "bg-white text-[#0b0705]" : "bg-accent text-on-accent"
+  }`;
+  const inner = (
+    <>
       <span
         className={`grid size-[40px] shrink-0 place-items-center rounded-full ${
           free ? "bg-[#0b0705] text-white" : "bg-chocolate text-white"
@@ -91,6 +91,14 @@ function PlanButton({
         <ChevronDown className="size-4" />
       </span>
       {children}
+    </>
+  );
+  if (href === WINDOWS_APP_DOWNLOAD_URL) {
+    return <AppDownloadLink className={className}>{inner}</AppDownloadLink>;
+  }
+  return (
+    <Link href={href} className={className}>
+      {inner}
     </Link>
   );
 }
@@ -137,7 +145,7 @@ export function PricingSection() {
 
             <FeatureList items={FREE_BULLETS} mutedChecks />
 
-            <PlanButton href="/download" variant="free">
+            <PlanButton href={WINDOWS_APP_DOWNLOAD_URL} variant="free">
               Get Started
             </PlanButton>
           </article>

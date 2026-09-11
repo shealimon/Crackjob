@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
+import { AppDownloadLink } from "@/components/app-download-link";
 import { BrandMark } from "@/components/brand-mark";
 import {
   BillingIcon,
@@ -18,6 +18,7 @@ import {
   SpendingIcon,
   UsageIcon,
 } from "@/components/dashboard/icons";
+import { useDashboardNav } from "@/components/dashboard/nav";
 
 const NAV = [
   { href: "/dashboard", label: "Overview", icon: OverviewIcon, exact: true },
@@ -41,9 +42,7 @@ export function DashboardShell({
   user: ShellUser;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const { path, go } = useDashboardNav();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -54,13 +53,7 @@ export function DashboardShell({
   useEffect(() => {
     setMobileOpen(false);
     setMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    for (const item of NAV) {
-      router.prefetch(item.href);
-    }
-  }, [router]);
+  }, [path]);
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {
@@ -75,15 +68,8 @@ export function DashboardShell({
   }, [menuOpen]);
 
   function isActive(href: string, exact?: boolean) {
-    if (exact) return pathname === href;
-    return pathname === href || pathname.startsWith(`${href}/`);
-  }
-
-  function go(href: string) {
-    if (href === pathname) return;
-    startTransition(() => {
-      router.push(href);
-    });
+    if (exact) return path === href;
+    return path === href || path.startsWith(`${href}/`);
   }
 
   const nav = (
@@ -149,14 +135,13 @@ export function DashboardShell({
             </div>
           ) : null}
           <div className="p-1.5">
-            <Link
-              href="/download"
+            <AppDownloadLink
               className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-black/70 hover:bg-black/[0.04] hover:text-black"
               onClick={() => setMenuOpen(false)}
             >
               <DownloadIcon className="size-4" />
               Download Windows app
-            </Link>
+            </AppDownloadLink>
             <Link
               href="/#faq"
               className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-black/70 hover:bg-black/[0.04] hover:text-black"
@@ -254,11 +239,7 @@ export function DashboardShell({
       ) : null}
 
       <main className="min-w-0 flex-1 pt-14 lg:pt-0">
-        <div
-          className={`mx-auto w-full max-w-5xl px-5 py-8 transition-opacity sm:px-8 sm:py-10 ${
-            pending ? "opacity-60" : "opacity-100"
-          }`}
-        >
+        <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
           {children}
         </div>
       </main>

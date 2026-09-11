@@ -7,6 +7,7 @@ import {
   FREE_EXPLORE_SOLVES,
   FREE_LIMIT_UPGRADE_MSG,
   isPaidPlan,
+  normalizePlan,
   type SubscriptionPlan,
 } from "@/lib/plans";
 
@@ -39,23 +40,52 @@ export function invalidateAccessCache(userId?: string) {
   accessCache.delete(userId);
 }
 
-export async function getAccessSnapshot(userId: string): Promise<AccessSnapshot> {
-  const cached = accessCache.get(userId);
-  if (cached && Date.now() - cached.at < ACCESS_CACHE_TTL_MS) {
-    return cached.access;
+function normalizeStatus(status: string | null | undefined): string {
+  return (status ?? "active").trim().toLowerCase();
+}
+
+export async function getAccessSnapshot(
+  userId: string,
+  options?: { fresh?: boolean },
+): Promise<AccessSnapshot> {
+  if (!options?.fresh) {
+    const cached = accessCache.get(userId);
+    if (cached && Date.now() - cached.at < ACCESS_CACHE_TTL_MS) {
+      return cached.access;
+    }
+  } else {
+    accessCache.delete(userId);
   }
 
   // Subscription first — paid users skip the explore count query.
   const sub = await prisma.subscription.findUnique({ where: { userId } });
 
-  const plan = sub?.plan ?? "free";
-  const status = sub?.status ?? "active";
+  const rawPlan = sub?.plan ?? "free";
+  const plan = normalizePlan(rawPlan);
+  let status = normalizeStatus(sub?.status);
   const endsAt = sub?.endsAt ?? null;
+  const now = Date.now();
+  const notEnded = endsAt === null || endsAt.getTime() > now;
 
-  const paidActive =
-    isPaidPlan(plan) &&
-    status === "active" &&
-    (endsAt === null || endsAt.getTime() > Date.now());
+  // Persist canonical plan id when DB has an alias (e.g. "monthly" → "month_1").
+  if (sub && rawPlan !== plan) {
+    void prisma.subscription
+      .update({ where: { userId }, data: { plan } })
+      .catch(() => undefined);
+  }
+
+  // Paid plan past endsAt → mark expired (best-effort) so dashboard + desktop stay in sync.
+  if (isPaidPlan(plan) && status === "active" && endsAt && endsAt.getTime() <= now) {
+    status = "expired";
+    void prisma.subscription
+      .updateMany({
+        where: { userId, status: "active" },
+        data: { status: "expired" },
+      })
+      .catch(() => undefined);
+  }
+
+  const paidActive = isPaidPlan(plan) && status === "active" && notEnded;
 
   let access: AccessSnapshot;
   if (paidActive) {
@@ -79,12 +109,12 @@ export async function getAccessSnapshot(userId: string): Promise<AccessSnapshot>
       },
     });
 
-    // Expired paid → treat as free explore (lifetime remaining)
+    // Expired / canceled paid → free explore limits, but keep plan id for UI ("subscription ended").
     access = {
       userId,
-      plan: "free",
-      status: "active",
-      endsAt: null,
+      plan: isPaidPlan(plan) ? plan : "free",
+      status: isPaidPlan(plan) ? status : "active",
+      endsAt: isPaidPlan(plan) ? endsAt : null,
       fullAccess: false,
       exploreRemaining: Math.max(0, FREE_EXPLORE_SOLVES - exploreUsed),
       solvesToday: exploreUsed,

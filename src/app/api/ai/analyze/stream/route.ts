@@ -175,6 +175,9 @@ async function handleSolveDone(
         access.answerTier === "blocked" ||
         (access.exploreRemaining ?? 0) <= 1),
     fullAccess: access.fullAccess,
+    plan: access.plan,
+    planStatus: access.status,
+    endsAt: access.endsAt?.toISOString() ?? null,
     exploreRemaining: access.exploreRemaining,
     solvesToday: access.solvesToday,
     answerTier: access.answerTier,

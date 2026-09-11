@@ -6,7 +6,7 @@ import {
 } from "@/components/landing/data";
 import { ChevronDownIcon } from "@/components/landing/icons";
 import { GoldButton, SectionEyebrow } from "@/components/landing/ui";
-import { PRODUCT_NAME } from "@/lib/constants";
+import { PRODUCT_NAME, WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 
 function TestimonialCard({
   quote,
@@ -70,7 +70,7 @@ export function SocialProof() {
           From landing internships to staff roles at FAANG, Big Tech, Quant firms, and beyond.
         </p>
         <div className="mt-8 flex justify-center">
-          <GoldButton href="/download" icon={<ChevronDownIcon className="size-2.5" />}>
+          <GoldButton href={WINDOWS_APP_DOWNLOAD_URL} icon={<ChevronDownIcon className="size-2.5" />}>
             Download for free
           </GoldButton>
         </div>

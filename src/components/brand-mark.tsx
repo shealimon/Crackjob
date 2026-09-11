@@ -13,7 +13,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2.5">
       <CrackLogo className="size-8 shrink-0" />
-      <span className="font-display text-[17px] font-medium leading-none tracking-[-0.025em] text-foreground">
+      <span className="font-display text-[17px] font-medium leading-none tracking-[-0.025em] text-current">
         {PRODUCT_NAME}
       </span>
     </span>

@@ -1,12 +1,4 @@
-"use client";
-
-import { UsagePanel } from "@/components/dashboard/usage-panel";
-import { DashboardPanelGate } from "@/components/dashboard/panel-gate";
-
+/** Segment marker — panel UI is rendered by `DashboardView` in the layout. */
 export default function DashboardUsagePage() {
-  return (
-    <DashboardPanelGate requireUsage>
-      {(data) => <UsagePanel initial={data} />}
-    </DashboardPanelGate>
-  );
+  return null;
 }

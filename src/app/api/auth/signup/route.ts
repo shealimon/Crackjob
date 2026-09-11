@@ -1,14 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { signupSchema } from "@/lib/auth-credentials";
 import { authEmailCallbackUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/prisma";
-import { createSupabaseAnonClient } from "@/lib/supabase/anon";
+import { createSupabaseRouteClient } from "@/lib/supabase/route";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 
 const EMAIL_EXISTS_MSG =
   "An account with this email already exists. Sign in instead.";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   let body: unknown;
   try {
     body = await req.json();
@@ -33,8 +33,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: EMAIL_EXISTS_MSG }, { status: 409 });
   }
 
-  const supabase = createSupabaseAnonClient();
-
+  const jar = NextResponse.next();
+  const { supabase, applyCookies } = createSupabaseRouteClient(req, jar);
   const { data, error } = await supabase.auth.signUp({
     email: normalizedEmail,
     password,
@@ -63,13 +63,17 @@ export async function POST(req: Request) {
     await syncPrismaUserFromSupabase(data.user, { name });
   }
 
-  return NextResponse.json(
-    {
-      ok: true,
-      needsVerification: !data.session,
-      message:
-        "Check your email for the Supabase verification link before signing in.",
-    },
-    { status: 201 },
+  const needsVerification = !data.session;
+  return applyCookies(
+    NextResponse.json(
+      {
+        ok: true,
+        needsVerification,
+        message: needsVerification
+          ? "Check your email for the Supabase verification link before signing in."
+          : "Account created. You can sign in now.",
+      },
+      { status: 201 },
+    ),
   );
 }
