@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { newToken, sha256 } from "@/lib/hash";
 import { getAccessSnapshot } from "@/lib/access";
+import { displayNameFromProfile } from "@/lib/user-bundle";
 
 export async function createDesktopSession(options: {
   userId: string;
@@ -45,7 +46,7 @@ export async function getDesktopSessionByToken(token: string) {
         select: {
           id: true,
           email: true,
-          name: true,
+          profile: { select: { firstName: true, lastName: true } },
         },
       },
     },
@@ -61,14 +62,20 @@ export async function userPublicPayload(
   const [user, access] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true },
+      select: {
+        id: true,
+        email: true,
+        profile: { select: { firstName: true, lastName: true } },
+      },
     }),
     // Login / session restore must not use a stale free→paid cache entry.
     getAccessSnapshot(userId, { fresh: options?.fresh ?? true }),
   ]);
   if (!user) return null;
   return {
-    ...user,
+    id: user.id,
+    email: user.email,
+    name: displayNameFromProfile(user.profile),
     image: null,
     plan: access.plan,
     planStatus: access.status,

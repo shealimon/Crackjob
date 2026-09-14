@@ -104,7 +104,7 @@ export async function getAccessSnapshot(
     const exploreUsed = await prisma.aiUsage.count({
       where: {
         userId,
-        status: "done",
+        error: null,
         accessLevel: "explore",
       },
     });

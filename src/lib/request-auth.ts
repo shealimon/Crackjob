@@ -1,3 +1,4 @@
+import { displayNameFromProfile } from "@/lib/user-bundle";
 import { auth } from "@/auth";
 import { getDesktopSessionByToken } from "@/lib/desktop-session";
 import { parseBearer } from "@/lib/tokens";
@@ -19,7 +20,7 @@ export async function getRequestUser(request: Request): Promise<AuthedUser | nul
     return {
       id: session.user.id,
       email: session.user.email,
-      name: session.user.name,
+      name: displayNameFromProfile(session.user.profile),
       image: null,
       source: "desktop",
       desktopSessionId: session.id,

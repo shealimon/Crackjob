@@ -11,6 +11,7 @@ import {
 import { signOut } from "next-auth/react";
 import type { DashboardPayload } from "@/lib/dashboard-data";
 import { planLabel } from "@/lib/plans";
+import { toPublicProfile } from "@/lib/profile";
 
 type DashboardDataContextValue = {
   data: DashboardPayload | null;
@@ -24,12 +25,24 @@ const DashboardDataContext = createContext<DashboardDataContextValue | null>(
 
 function asPayload(body: Record<string, unknown>): DashboardPayload {
   const user = body.user as DashboardPayload["user"];
+  const profile = body.profile as DashboardPayload["profile"] | undefined;
   return {
     user: {
       ...user,
       planLabel: user.planLabel || planLabel(user.plan),
     },
-    usageByDay: (body.usageByDay as DashboardPayload["usageByDay"]) ?? [],
+    usageByDay: (
+      ((body.usageByDay as DashboardPayload["usageByDay"]) ?? []).map((d) => ({
+        date: d.date,
+        creditsUsed: d.creditsUsed ?? 0,
+        solves: d.solves ?? 0,
+        exploreSolves: d.exploreSolves ?? 0,
+        fullSolves: d.fullSolves ?? 0,
+      }))
+    ),
+    usageEvents: (body.usageEvents as DashboardPayload["usageEvents"]) ?? [],
+    payments: (body.payments as DashboardPayload["payments"]) ?? [],
+    profile: profile ?? toPublicProfile(null),
     desktopSession:
       (body.desktopSession as DashboardPayload["desktopSession"]) ?? null,
   };
@@ -54,7 +67,7 @@ export function DashboardDataProvider({
 
   useEffect(() => {
     // SSR shell already has user + desktop — don't block overview with /api/me.
-    // Usage/spending pages call refresh() when they need the 14-day series.
+    // Usage pages call refresh() when they need the 14-day series.
     if (initial) {
       setLoading(false);
       return;

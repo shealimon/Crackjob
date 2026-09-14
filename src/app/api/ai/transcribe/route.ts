@@ -2,15 +2,20 @@ import { z } from "zod";
 import { requireUser } from "@/lib/api-auth";
 import { json, optionsCors } from "@/lib/http";
 import { mapOpenAiError } from "@/lib/openai-errors";
-import { transcribeWavBuffer, transcribeWavBase64 } from "@/lib/transcribe";
+import { transcribeWavBuffer, transcribeWavBase64, transcribeWavBufferStreaming } from "@/lib/transcribe";
 
 const jsonSchema = z.object({
   audioBase64: z.string().min(100),
   language: z.string().max(40).optional(),
+  stream: z.boolean().optional(),
 });
 
 export function OPTIONS() {
   return optionsCors();
+}
+
+function sseEncode(obj: unknown) {
+  return `data: ${JSON.stringify(obj)}\n\n`;
 }
 
 export async function POST(request: Request) {
@@ -22,28 +27,82 @@ export async function POST(request: Request) {
   const t0 = Date.now();
   try {
     const contentType = request.headers.get("content-type") || "";
-    let text = "";
-    let durationSec = 0;
+    let language: string | undefined;
+    let wantStream = false;
+    let buffer: Buffer | null = null;
+    let audioBase64: string | null = null;
 
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
       const file = form.get("audio");
-      const language =
+      language =
         typeof form.get("language") === "string" ? String(form.get("language")) : undefined;
+      wantStream =
+        String(form.get("stream") || "") === "1" ||
+        String(form.get("stream") || "").toLowerCase() === "true";
       if (!(file instanceof Blob) || file.size < 1000) {
         return json({ error: "Send audio file (WAV)" }, { status: 400 });
       }
-      const buffer = Buffer.from(await file.arrayBuffer());
-      ({ text, durationSec } = await transcribeWavBuffer(buffer, language));
+      buffer = Buffer.from(await file.arrayBuffer());
     } else {
       const body = jsonSchema.safeParse(await request.json().catch(() => null));
       if (!body.success) {
         return json({ error: "Send audioBase64 (WAV) or multipart audio" }, { status: 400 });
       }
-      ({ text, durationSec } = await transcribeWavBase64(
-        body.data.audioBase64,
-        body.data.language,
-      ));
+      audioBase64 = body.data.audioBase64;
+      language = body.data.language;
+      wantStream = Boolean(body.data.stream);
+      buffer = Buffer.from(audioBase64, "base64");
+    }
+
+    if (wantStream) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          try {
+            const { text, durationSec } = await transcribeWavBufferStreaming(
+              buffer!,
+              language,
+              (partial) => {
+                controller.enqueue(encoder.encode(sseEncode({ type: "partial", text: partial })));
+              },
+            );
+            controller.enqueue(
+              encoder.encode(sseEncode({ type: "done", text, durationSec })),
+            );
+            if (process.env.NODE_ENV === "development") {
+              const preview = text ? text.slice(0, 80) : "(empty)";
+              console.log(
+                `[transcribe:stream] ${Date.now() - t0}ms wall, ${durationSec.toFixed(1)}s audio → ${preview}`,
+              );
+            }
+          } catch (error) {
+            const { message, status } = mapOpenAiError(error, "Transcription failed");
+            controller.enqueue(
+              encoder.encode(sseEncode({ type: "error", error: message, status })),
+            );
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache, no-transform",
+          Connection: "keep-alive",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
+    let text = "";
+    let durationSec = 0;
+    if (audioBase64) {
+      ({ text, durationSec } = await transcribeWavBase64(audioBase64, language));
+    } else {
+      ({ text, durationSec } = await transcribeWavBuffer(buffer!, language));
     }
 
     if (process.env.NODE_ENV === "development") {

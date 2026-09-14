@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/landing/hero";
 import { AppDemoSection } from "@/components/landing/app-demo-section";
-import { FinalCta } from "@/components/landing/final-cta";
+import { Platforms } from "@/components/landing/platforms";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { ProofSection } from "@/components/landing/proof-section";
 import { PRODUCT_NAME } from "@/lib/constants";
@@ -27,7 +27,7 @@ export default function Home() {
       <AppDemoSection />
       <ProofSection />
       <PricingSection />
-      <FinalCta />
+      <Platforms />
     </main>
   );
 }

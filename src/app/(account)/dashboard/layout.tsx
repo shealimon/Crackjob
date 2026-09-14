@@ -18,7 +18,10 @@ export default async function DashboardLayout({
   const shell = await getDashboardShell();
   const initial = {
     user: shell.user,
-    usageByDay: [] as { date: string; creditsUsed: number }[],
+    usageByDay: [] as import("@/lib/dashboard-data").DashboardUsageDay[],
+    usageEvents: [] as import("@/lib/dashboard-data").DashboardUsageEvent[],
+    payments: [] as import("@/lib/dashboard-data").DashboardPayment[],
+    profile: shell.profile,
     desktopSession: shell.desktopSession,
   };
 

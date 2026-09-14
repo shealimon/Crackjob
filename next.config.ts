@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const websiteRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@prisma/client"],
+  serverExternalPackages: ["@prisma/client", "razorpay"],
   turbopack: {
     root: websiteRoot,
   },

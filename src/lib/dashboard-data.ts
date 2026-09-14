@@ -1,9 +1,12 @@
 import { cache } from "react";
 import { auth } from "@/auth";
 import { clearSessionToLogin } from "@/lib/clear-session-login";
-import { dailyUsageByDay } from "@/lib/credits";
+import { dailyUsageByDay, listRecentAiUsage } from "@/lib/credits";
+import type { AiUsageEvent } from "@/lib/credits";
 import { getActiveDesktopSession, userPublicPayload } from "@/lib/desktop-session";
 import { planLabel } from "@/lib/plans";
+import { PROFILE_SELECT, toPublicProfile, type PublicProfile } from "@/lib/profile";
+import { prisma } from "@/lib/prisma";
 
 export type DashboardUser = {
   id: string;
@@ -19,9 +22,36 @@ export type DashboardUser = {
   creditBalance: number;
 };
 
+export type DashboardPayment = {
+  id: string;
+  plan: string;
+  amountPaise: number;
+  currency: string;
+  status: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string | null;
+  createdAt: string;
+  paidAt: string | null;
+};
+
+export type DashboardUsageDay = {
+  date: string;
+  creditsUsed: number;
+  solves: number;
+  exploreSolves: number;
+  fullSolves: number;
+};
+
+export type DashboardUsageEvent = AiUsageEvent;
+
+export type DashboardProfile = PublicProfile;
+
 export type DashboardPayload = {
   user: DashboardUser;
-  usageByDay: { date: string; creditsUsed: number }[];
+  usageByDay: DashboardUsageDay[];
+  usageEvents: DashboardUsageEvent[];
+  payments: DashboardPayment[];
+  profile: DashboardProfile;
   desktopSession: {
     id: string;
     deviceName: string | null;
@@ -59,9 +89,13 @@ export const getDashboardNavUser = cache(async () => {
 /** Shell / overview — no 14-day usage scan. */
 export const getDashboardShell = cache(async () => {
   const userId = await requireUserId();
-  const [raw, desktop] = await Promise.all([
+  const [raw, desktop, profile] = await Promise.all([
     userPublicPayload(userId),
     getActiveDesktopSession(userId),
+    prisma.profile.findUnique({
+      where: { userId },
+      select: PROFILE_SELECT,
+    }),
   ]);
   if (!raw) return clearSessionToLogin();
 
@@ -84,6 +118,7 @@ export const getDashboardShell = cache(async () => {
 
   return {
     user,
+    profile: toPublicProfile(profile),
     desktopSession: desktop
       ? {
           id: desktop.id,
@@ -95,10 +130,45 @@ export const getDashboardShell = cache(async () => {
   };
 });
 
-/** Usage / spending pages — includes chart series. */
+/** Usage / billing pages — includes chart series + invoices. */
 export const getDashboardPayload = cache(async (): Promise<DashboardPayload> => {
   const userId = await requireUserId();
-  const shell = await getDashboardShell();
-  const usageByDay = await dailyUsageByDay(userId, 14);
-  return { ...shell, usageByDay };
+  const [shell, usageByDay, usageEvents, paymentRows] = await Promise.all([
+    getDashboardShell(),
+    dailyUsageByDay(userId, 371),
+    listRecentAiUsage(userId, 500),
+    prisma.payment.findMany({
+      where: { userId, status: "paid" },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        plan: true,
+        amountPaise: true,
+        currency: true,
+        status: true,
+        razorpayOrderId: true,
+        razorpayPaymentId: true,
+        createdAt: true,
+        paidAt: true,
+      },
+    }),
+  ]);
+
+  return {
+    ...shell,
+    usageByDay,
+    usageEvents,
+    payments: paymentRows.map((p) => ({
+      id: p.id,
+      plan: p.plan,
+      amountPaise: p.amountPaise,
+      currency: p.currency,
+      status: p.status,
+      razorpayOrderId: p.razorpayOrderId,
+      razorpayPaymentId: p.razorpayPaymentId,
+      createdAt: p.createdAt.toISOString(),
+      paidAt: p.paidAt?.toISOString() ?? null,
+    })),
+  };
 });

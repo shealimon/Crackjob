@@ -1,10 +1,50 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useDashboardData } from "@/components/dashboard/dashboard-data";
+import { startPlanCheckout } from "@/components/dashboard/razorpay-checkout";
 import { PLAN_PACKS } from "@/lib/constants";
-import type { DashboardPayload } from "@/lib/dashboard-data";
-import { FREE_EXPLORE_SOLVES, FREE_FULL_SOLVES, FREE_PARTIAL_SOLVES } from "@/lib/plans";
+import type { DashboardPayload, DashboardPayment } from "@/lib/dashboard-data";
+import { formatInrFromPaise } from "@/lib/razorpay-plans";
+import {
+  FREE_EXPLORE_SOLVES,
+  FREE_FULL_SOLVES,
+  FREE_PARTIAL_SOLVES,
+  planLabel,
+} from "@/lib/plans";
 
 export function BillingPanel({ initial }: { initial: DashboardPayload }) {
-  const { user } = initial;
+  const { user, payments = [] } = initial;
+  const { refresh } = useDashboardData();
+  const router = useRouter();
+  const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onBuy(planId: string) {
+    setBusyPlan(planId);
+    setError(null);
+    setMessage(null);
+    try {
+      const result = await startPlanCheckout(planId);
+      setMessage(
+        result.endsAt
+          ? `Payment successful — ${result.planLabel ?? planLabel(planId)} active until ${new Date(result.endsAt).toLocaleDateString("en-IN")}.`
+          : "Payment successful. Access unlocked.",
+      );
+      await refresh();
+      router.refresh();
+    } catch (err) {
+      const text = err instanceof Error ? err.message : "Checkout failed";
+      if (text !== "Payment cancelled") {
+        setError(text);
+      }
+    } finally {
+      setBusyPlan(null);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -13,9 +53,20 @@ export function BillingPanel({ initial }: { initial: DashboardPayload }) {
           Billing & Invoices
         </h1>
         <p className="mt-2 text-sm text-black/50">
-          Manage your plan. Invoices appear after Razorpay checkout goes live.
+          Buy or renew anytime. Active time extends from your current end date.
         </p>
       </div>
+
+      {message ? (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </p>
+      ) : null}
 
       <section className="rounded-2xl border border-black/8 bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -30,21 +81,17 @@ export function BillingPanel({ initial }: { initial: DashboardPayload }) {
                 : `Free explore — ${user.exploreRemaining ?? 0} of ${FREE_EXPLORE_SOLVES} left (${FREE_FULL_SOLVES} full + ${FREE_PARTIAL_SOLVES} preview · one-time)`}
             </p>
           </div>
-          {!user.fullAccess ? (
-            <span className="rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white opacity-60">
-              Checkout coming soon
-            </span>
-          ) : null}
         </div>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
         {PLAN_PACKS.map((pack) => {
-          const current = user.plan === pack.id;
+          const current = user.plan === pack.id && user.fullAccess;
+          const busy = busyPlan === pack.id;
           return (
             <div
               key={pack.id}
-              className="rounded-2xl border border-black/8 bg-white p-5"
+              className="flex flex-col rounded-2xl border border-black/8 bg-white p-5"
             >
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-semibold text-black">{pack.name}</h3>
@@ -56,6 +103,14 @@ export function BillingPanel({ initial }: { initial: DashboardPayload }) {
               </div>
               <p className="mt-3 text-xl font-semibold text-black">{pack.priceLabel}</p>
               <p className="mt-2 text-sm text-black/55">{pack.note}</p>
+              <button
+                type="button"
+                disabled={Boolean(busyPlan)}
+                onClick={() => void onBuy(pack.id)}
+                className="mt-4 inline-flex items-center justify-center rounded-lg bg-black px-3.5 py-2 text-[13px] font-semibold text-white transition hover:bg-black/85 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {busy ? "Opening checkout…" : current ? "Renew" : "Buy now"}
+              </button>
             </div>
           );
         })}
@@ -63,10 +118,18 @@ export function BillingPanel({ initial }: { initial: DashboardPayload }) {
 
       <section className="rounded-2xl border border-black/8 bg-white p-5 sm:p-6">
         <h2 className="text-sm font-semibold text-black">Invoices</h2>
-        <p className="mt-3 text-sm leading-6 text-black/55">
-          No invoices yet. After payment is enabled, receipts for 1 month / 3
-          months / yearly will list here.
-        </p>
+        {payments.length === 0 ? (
+          <p className="mt-3 text-sm leading-6 text-black/55">
+            No invoices yet. Receipts appear here after a successful Razorpay
+            payment.
+          </p>
+        ) : (
+          <ul className="mt-4 divide-y divide-black/8">
+            {payments.map((p) => (
+              <InvoiceRow key={p.id} payment={p} />
+            ))}
+          </ul>
+        )}
         <Link
           href="/#pricing"
           className="mt-4 inline-flex text-[13px] font-semibold text-black underline-offset-4 hover:underline"
@@ -75,5 +138,27 @@ export function BillingPanel({ initial }: { initial: DashboardPayload }) {
         </Link>
       </section>
     </div>
+  );
+}
+
+function InvoiceRow({ payment }: { payment: DashboardPayment }) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+      <div>
+        <p className="font-medium text-black">{planLabel(payment.plan)}</p>
+        <p className="mt-0.5 text-xs text-black/45">
+          {new Date(payment.paidAt ?? payment.createdAt).toLocaleString("en-IN")}
+          {payment.razorpayPaymentId
+            ? ` · ${payment.razorpayPaymentId}`
+            : ""}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="font-semibold text-black">
+          {formatInrFromPaise(payment.amountPaise)}
+        </p>
+        <p className="text-xs capitalize text-black/45">{payment.status}</p>
+      </div>
+    </li>
   );
 }

@@ -28,13 +28,15 @@ const PRO_OPTIONS = {
   monthly: {
     label: "Monthly",
     eyebrow: "Monthly Pro",
-    price: "₹9,999",
+    originalPrice: "₹9,999",
+    price: "₹4,999",
     cadence: "/month",
   },
   quarterly: {
     label: "Quarterly",
     eyebrow: "Quarterly Pro",
-    price: "₹19,999",
+    originalPrice: "₹24,999",
+    price: "₹12,499",
     cadence: "/3 months",
   },
 } as const;
@@ -180,13 +182,18 @@ export function PricingSection() {
               </div>
             </div>
 
-            <div className="mt-6 flex items-end gap-2">
-              <p className="font-display text-6xl font-semibold tracking-tight text-accent sm:text-7xl">
-                {pro.price}
+            <div className="mt-6">
+              <p className="font-display text-2xl font-semibold tracking-tight text-white/55 line-through sm:text-3xl">
+                {pro.originalPrice}
               </p>
-              <p className="mb-2 font-display text-sm uppercase tracking-[0.08em] text-white/45">
-                {pro.cadence}
-              </p>
+              <div className="mt-1 flex items-end gap-2">
+                <p className="font-display text-6xl font-semibold tracking-tight text-accent sm:text-7xl">
+                  {pro.price}
+                </p>
+                <p className="mb-2 font-display text-sm uppercase tracking-[0.08em] text-white/45">
+                  {pro.cadence}
+                </p>
+              </div>
             </div>
 
             <FeatureList items={PAID_BULLETS} />
@@ -201,13 +208,18 @@ export function PricingSection() {
             <p className="font-display text-[12px] font-medium uppercase tracking-[0.16em] text-white/45">
               Yearly Pro
             </p>
-            <div className="mt-6 flex items-end gap-2">
-              <p className="font-display text-6xl font-semibold tracking-tight text-white sm:text-7xl">
-                ₹49,999
+            <div className="mt-6">
+              <p className="font-display text-2xl font-semibold tracking-tight text-white/55 line-through sm:text-3xl">
+                ₹99,999
               </p>
-              <p className="mb-2 font-display text-sm uppercase tracking-[0.08em] text-white/45">
-                /year
-              </p>
+              <div className="mt-1 flex items-end gap-2">
+                <p className="font-display text-6xl font-semibold tracking-tight text-white sm:text-7xl">
+                  ₹44,999
+                </p>
+                <p className="mb-2 font-display text-sm uppercase tracking-[0.08em] text-white/45">
+                  /year
+                </p>
+              </div>
             </div>
 
             <FeatureList items={PAID_BULLETS} />

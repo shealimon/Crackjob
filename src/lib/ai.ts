@@ -37,6 +37,7 @@ export type StreamSolveEvent =
       inputTokens: number;
       outputTokens: number;
       demo: boolean;
+      model: string;
     };
 
 export type AiConfig = {
@@ -61,8 +62,9 @@ export function getAiConfig(): AiConfig {
     configured: Boolean(apiKey),
     demoMode,
     model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
-    fastModel: process.env.OPENAI_FAST_MODEL || "gpt-5.6-luna",
-    visionModel: process.env.OPENAI_VISION_MODEL || "gpt-5.6-luna",
+    // Voice/live TTFT path — nano is cheapest+fast among 4.1; override via OPENAI_FAST_MODEL.
+    fastModel: process.env.OPENAI_FAST_MODEL || "gpt-4.1-nano",
+    visionModel: process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini",
     baseUrl,
   };
 }
@@ -203,7 +205,8 @@ Then the full candidate answer for that question (same depth as an audio intervi
 
 function pickStreamModel(options: SolveOptions, config: AiConfig) {
   if (options.imageBase64) return config.visionModel || config.fastModel;
-  return config.model;
+  // Live voice / pasted text — fastModel for sub-second TTFT (main model was ~2s+).
+  return config.fastModel || config.model;
 }
 
 async function buildStreamUserContent(
@@ -410,6 +413,7 @@ async function* demoStreamSolve(options: SolveOptions): AsyncGenerator<StreamSol
     inputTokens: DEMO_SOLVE_CREDITS,
     outputTokens: 0,
     demo: true,
+    model: "demo",
   };
 }
 
@@ -445,15 +449,16 @@ async function* streamCheapTwoStep(options: SolveOptions): AsyncGenerator<Stream
   const config = getAiConfig();
   const design = looksLikeDesignQuestion(fullQuestion, options.mode);
   const maxOut = getAnswerMaxTokens(options, fullQuestion);
+  const model = pickStreamModel(options, config);
 
   const emptyResult = streamTextToResult("", displayLabel);
   yield { type: "delta", text: "", result: emptyResult };
 
   const completion = await client.chat.completions.create({
-    model: config.model,
-    ...temperatureParams(config.model, answerTemperature(options, fullQuestion)),
-    ...completionOutputParams(config.model, maxOut),
-    ...gpt5LiveParams(config.model, { design }),
+    model,
+    ...temperatureParams(model, answerTemperature(options, fullQuestion)),
+    ...completionOutputParams(model, maxOut),
+    ...gpt5LiveParams(model, { design }),
     stream: true,
     stream_options: { include_usage: true },
     messages: [
@@ -488,6 +493,7 @@ async function* streamCheapTwoStep(options: SolveOptions): AsyncGenerator<Stream
     inputTokens: extractedRaw.inputTokens + answerInput,
     outputTokens: extractedRaw.outputTokens + answerOutput,
     demo: false,
+    model,
   };
 }
 
@@ -553,6 +559,7 @@ async function* streamFastSingleCall(options: SolveOptions): AsyncGenerator<Stre
     inputTokens,
     outputTokens,
     demo: false,
+    model,
   };
 }
 
@@ -576,9 +583,10 @@ export async function* streamSolve(options: SolveOptions): AsyncGenerator<Stream
     return;
   }
 
-  // Spoken / pasted text: text-only answer (same path as before).
+  // Spoken / pasted text: one fast stream (fastModel). Previously used
+  // streamCheapTwoStep → OPENAI_MODEL (gpt-5.x) which added ~2s TTFT after Ctrl+Enter.
   if (hasText) {
-    yield* streamCheapTwoStep(options);
+    yield* streamFastSingleCall(options);
     return;
   }
 

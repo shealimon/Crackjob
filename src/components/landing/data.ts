@@ -323,15 +323,14 @@ export const OFFER_CARDS = [
 ] as const;
 
 export const PLATFORMS = [
-  { n: "001", name: "Microsoft Teams", updated: "2hrs ago" },
-  { n: "002", name: "Zoom", updated: "5hrs ago" },
-  { n: "003", name: "Google Meet", updated: "5hrs ago" },
-  { n: "004", name: "Amazon Chime", updated: "2hrs ago" },
-  { n: "005", name: "Cisco Webex", updated: "18hrs ago" },
-  { n: "006", name: "Lark/Feishu", updated: "15hrs ago" },
-  { n: "007", name: "Hackerrank", updated: "2hrs ago" },
-  { n: "008", name: "CoderPad", updated: "22hrs ago" },
-  { n: "009", name: "Codility", updated: "8hrs ago" },
+  { id: "google-meet", name: "Google Meet", logo: "/platforms/meet.svg" },
+  { id: "microsoft-teams", name: "Microsoft Teams", logo: "/platforms/teams.png" },
+  { id: "zoom", name: "Zoom", logo: "/platforms/zoom.svg?v=20260912c" },
+  { id: "hackerrank", name: "HackerRank", logo: "/platforms/hackerrank.png?v=20260912b" },
+  { id: "coderpad", name: "CoderPad", logo: "/platforms/coderpad.png" },
+  { id: "cisco-webex", name: "Webex", logo: "/platforms/webex.png" },
+  { id: "amazon-chime", name: "Amazon Chime", logo: "/platforms/chime.svg?v=20260912e" },
+  { id: "lark", name: "Lark", logo: "/platforms/lark.png" },
 ] as const;
 
 export const FAQS = [

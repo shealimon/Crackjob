@@ -24,8 +24,7 @@ async function ensureDevUserId() {
     user = await prisma.user.create({
       data: {
         email: DEV_EMAIL,
-        name: "Local Dev",
-        profile: { create: {} },
+        profile: { create: { firstName: "Local", lastName: "Dev" } },
         subscription: {
           create: {
             plan: "year",

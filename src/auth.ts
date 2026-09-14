@@ -11,7 +11,7 @@ import {
   sessionTokenCookieOptions,
   useSecureAuthCookies,
 } from "@/lib/session-cookie";
-import { ensureUserBundle } from "@/lib/user-bundle";
+import { displayNameFromProfile, ensureUserBundle } from "@/lib/user-bundle";
 
 class EmailNotVerifiedError extends CredentialsSignin {
   code = "email_not_verified";
@@ -26,9 +26,75 @@ const secureCookies = useSecureAuthCookies();
 /** Vercel .env import sometimes keeps wrapping quotes on secrets. */
 const authSecret = process.env.AUTH_SECRET?.trim().replace(/^["']|["']$/g, "");
 
+const prismaAdapter = PrismaAdapter(prisma);
+
+function toAdapterUser(user: {
+  id: string;
+  email: string | null;
+  emailVerified: Date | null;
+  name: string | null;
+}) {
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    emailVerified: user.emailVerified,
+    name: user.name,
+    image: null,
+  };
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: authSecret,
-  adapter: PrismaAdapter(prisma),
+  adapter: {
+    ...prismaAdapter,
+    async createUser(data) {
+      const { name, image: _image, ...rest } = data;
+      const user = await prisma.user.create({
+        data: {
+          email: rest.email,
+          emailVerified: rest.emailVerified ?? null,
+        },
+      });
+      const firstName = typeof name === "string" ? name.trim() || null : null;
+      await prisma.profile.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, firstName },
+        update: firstName ? { firstName } : {},
+      });
+      return toAdapterUser({
+        id: user.id,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        name: firstName,
+      });
+    },
+    async getUser(id) {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        include: { profile: { select: { firstName: true, lastName: true } } },
+      });
+      if (!user) return null;
+      return toAdapterUser({
+        id: user.id,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        name: displayNameFromProfile(user.profile),
+      });
+    },
+    async getUserByEmail(email) {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        include: { profile: { select: { firstName: true, lastName: true } } },
+      });
+      if (!user) return null;
+      return toAdapterUser({
+        id: user.id,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        name: displayNameFromProfile(user.profile),
+      });
+    },
+  },
   providers: [
     Credentials({
       name: "Email",

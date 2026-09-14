@@ -80,13 +80,7 @@ export async function POST(request: Request) {
   const answerTier: FreeAnswerTier = fullAccess ? "full" : (access.answerTier ?? "full");
 
   return ndjsonStream(async (send) => {
-    // Create usage row in parallel with the model call — never block first tokens on DB.
-    const jobPromise = recordAiUsage({
-      userId: authed.userId,
-      mode: body.data.mode,
-      status: "running",
-      accessLevel: fullAccess ? "full" : "explore",
-    });
+    const jobId = crypto.randomUUID();
     send({ type: "start", mode: body.data.mode });
 
     try {
@@ -102,10 +96,9 @@ export async function POST(request: Request) {
           continue;
         }
 
-        const job = await jobPromise;
         await handleSolveDone(event, {
           send,
-          jobId: job.id,
+          jobId,
           userId: authed.userId,
           mode: body.data.mode,
           fullAccess,
@@ -113,22 +106,11 @@ export async function POST(request: Request) {
         });
       }
     } catch (error) {
-      const job = await jobPromise.catch(() => null);
       const message = error instanceof Error ? error.message : "Analyze failed";
-      if (job) {
-        void recordAiUsage({
-          id: job.id,
-          userId: authed.userId,
-          mode: body.data.mode,
-          status: "error",
-          error: message,
-          accessLevel: fullAccess ? "full" : "explore",
-        }).catch(() => undefined);
-      }
       send({
         type: "error",
         error: message,
-        jobId: job?.id,
+        jobId,
         status: 500,
       });
     }
@@ -152,8 +134,7 @@ async function handleSolveDone(
   await recordAiUsage({
     id: ctx.jobId,
     userId: ctx.userId,
-    mode: ctx.mode,
-    status: "done",
+    model: event.model,
     inputTokens: event.inputTokens,
     outputTokens: event.outputTokens,
     creditsUsed,
@@ -166,6 +147,7 @@ async function handleSolveDone(
     type: "done",
     jobId: ctx.jobId,
     mode: ctx.mode,
+    model: event.model,
     demo: event.demo,
     creditsUsed,
     creditBalance: access.fullAccess ? 999_999 : (access.exploreRemaining ?? 0),

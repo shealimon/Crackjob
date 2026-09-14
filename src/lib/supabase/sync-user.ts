@@ -1,12 +1,34 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
-import { ensureUserBundle } from "@/lib/user-bundle";
+import { displayNameFromProfile, ensureUserBundle } from "@/lib/user-bundle";
 
 export type SyncedAuthUser = {
   id: string;
   email: string;
   name: string | null;
 };
+
+async function profileDisplayName(userId: string) {
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+    select: { firstName: true, lastName: true },
+  });
+  return displayNameFromProfile(profile);
+}
+
+async function upsertProfileFirstName(userId: string, firstName: string | null) {
+  if (!firstName) return;
+  const existing = await prisma.profile.findUnique({
+    where: { userId },
+    select: { firstName: true },
+  });
+  if (existing?.firstName?.trim()) return;
+  await prisma.profile.upsert({
+    where: { userId },
+    create: { userId, firstName },
+    update: { firstName },
+  });
+}
 
 export async function syncPrismaUserFromSupabase(
   authUser: SupabaseUser,
@@ -33,19 +55,16 @@ export async function syncPrismaUserFromSupabase(
     select: {
       id: true,
       email: true,
-      name: true,
       emailVerified: true,
-      profile: { select: { userId: true } },
+      profile: { select: { userId: true, firstName: true, lastName: true } },
       subscription: { select: { userId: true } },
     },
   });
 
   if (existing) {
-    const nextName = name ?? existing.name;
     const nextVerified = emailVerified ?? existing.emailVerified;
     const metaChanged =
       existing.email !== email ||
-      existing.name !== nextName ||
       (existing.emailVerified?.getTime() ?? null) !== (nextVerified?.getTime() ?? null);
 
     if (metaChanged) {
@@ -53,7 +72,6 @@ export async function syncPrismaUserFromSupabase(
         where: { id: authUser.id },
         data: {
           email,
-          name: nextName,
           emailVerified: nextVerified,
         },
       });
@@ -62,53 +80,51 @@ export async function syncPrismaUserFromSupabase(
     if (!existing.profile || !existing.subscription) {
       await ensureUserBundle(authUser.id);
     }
+    await upsertProfileFirstName(authUser.id, name);
 
-    return { id: existing.id, email, name: nextName };
+    const displayName =
+      displayNameFromProfile(existing.profile) || name || (await profileDisplayName(authUser.id));
+    return { id: existing.id, email, name: displayName };
   }
 
   const byEmail = await prisma.user.findUnique({
     where: { email },
     select: {
       id: true,
-      name: true,
       emailVerified: true,
-      profile: { select: { userId: true } },
+      profile: { select: { userId: true, firstName: true, lastName: true } },
       subscription: { select: { userId: true } },
     },
   });
 
   if (byEmail && byEmail.id !== authUser.id) {
-    // Legacy Prisma row — re-link by updating id is hard; prefer email match update metadata.
-    const nextName = name ?? byEmail.name;
     const nextVerified = emailVerified ?? byEmail.emailVerified;
     const metaChanged =
-      byEmail.name !== nextName ||
       (byEmail.emailVerified?.getTime() ?? null) !== (nextVerified?.getTime() ?? null);
 
     if (metaChanged) {
       await prisma.user.update({
         where: { id: byEmail.id },
-        data: {
-          emailVerified: nextVerified,
-          name: nextName,
-        },
+        data: { emailVerified: nextVerified },
       });
     }
 
     if (!byEmail.profile || !byEmail.subscription) {
       await ensureUserBundle(byEmail.id);
     }
+    await upsertProfileFirstName(byEmail.id, name);
 
-    return { id: byEmail.id, email, name: nextName };
+    const displayName =
+      displayNameFromProfile(byEmail.profile) || name || (await profileDisplayName(byEmail.id));
+    return { id: byEmail.id, email, name: displayName };
   }
 
   await prisma.user.create({
     data: {
       id: authUser.id,
       email,
-      name,
       emailVerified,
-      profile: { create: {} },
+      profile: { create: { firstName: name } },
       subscription: {
         create: {
           plan: "free",

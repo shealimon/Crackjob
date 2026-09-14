@@ -14,18 +14,21 @@ import {
   MenuIcon,
   MoreIcon,
   OverviewIcon,
+  QuestionsIcon,
   SettingsIcon,
-  SpendingIcon,
   UsageIcon,
 } from "@/components/dashboard/icons";
 import { useDashboardNav } from "@/components/dashboard/nav";
 
-const NAV = [
+const NAV_PRIMARY = [
   { href: "/dashboard", label: "Overview", icon: OverviewIcon, exact: true },
-  { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
+  { href: "/dashboard/questions", label: "Questions", icon: QuestionsIcon },
+] as const;
+
+const NAV_ACCOUNT = [
   { href: "/dashboard/usage", label: "Usage", icon: UsageIcon },
-  { href: "/dashboard/spending", label: "Spending", icon: SpendingIcon },
   { href: "/dashboard/billing", label: "Billing & Invoices", icon: BillingIcon },
+  { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
 ] as const;
 
 type ShellUser = {
@@ -72,40 +75,49 @@ export function DashboardShell({
     return path === href || path.startsWith(`${href}/`);
   }
 
+  function renderNavItems(
+    items: typeof NAV_PRIMARY | typeof NAV_ACCOUNT,
+  ) {
+    return items.map((item) => {
+      const active = isActive(item.href, "exact" in item ? item.exact : false);
+      const Icon = item.icon;
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          prefetch
+          onClick={(event) => {
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey ||
+              event.button !== 0
+            ) {
+              return;
+            }
+            event.preventDefault();
+            go(item.href);
+          }}
+          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium transition ${
+            active
+              ? "bg-black/[0.06] text-black"
+              : "text-black/55 hover:bg-black/[0.04] hover:text-black"
+          }`}
+        >
+          <Icon className="size-5 shrink-0 opacity-80" />
+          {item.label}
+        </Link>
+      );
+    });
+  }
+
   const nav = (
-    <nav className="flex flex-1 flex-col gap-0.5 px-2 pt-2">
-      {NAV.map((item) => {
-        const active = isActive(item.href, "exact" in item ? item.exact : false);
-        const Icon = item.icon;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            prefetch
-            onClick={(event) => {
-              if (
-                event.metaKey ||
-                event.ctrlKey ||
-                event.shiftKey ||
-                event.altKey ||
-                event.button !== 0
-              ) {
-                return;
-              }
-              event.preventDefault();
-              go(item.href);
-            }}
-            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition ${
-              active
-                ? "bg-black/[0.06] text-black"
-                : "text-black/55 hover:bg-black/[0.04] hover:text-black"
-            }`}
-          >
-            <Icon className="size-4 shrink-0 opacity-80" />
-            {item.label}
-          </Link>
-        );
-      })}
+    <nav className="flex flex-1 flex-col px-2.5 pt-2">
+      <div className="flex flex-col gap-1">
+        {renderNavItems(NAV_PRIMARY)}
+        {renderNavItems(NAV_ACCOUNT)}
+      </div>
     </nav>
   );
 
@@ -185,7 +197,7 @@ export function DashboardShell({
 
   return (
     <div className="dashboard-light flex min-h-screen bg-[var(--dash-bg)] text-[var(--dash-fg)]">
-      <aside className="sticky top-0 hidden h-screen w-[232px] shrink-0 flex-col border-r border-black/8 bg-[var(--dash-sidebar)] lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col border-r border-black/8 bg-[var(--dash-sidebar)] lg:flex">
         <div className="flex h-14 items-center px-4">
           <Link
             href="/dashboard"
@@ -231,7 +243,7 @@ export function DashboardShell({
             aria-label="Close menu"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute left-0 top-14 flex h-[calc(100vh-3.5rem)] w-[min(280px,88vw)] flex-col border-r border-black/8 bg-[var(--dash-sidebar)] shadow-xl">
+          <aside className="absolute left-0 top-14 flex h-[calc(100vh-3.5rem)] w-[min(300px,88vw)] flex-col border-r border-black/8 bg-[var(--dash-sidebar)] shadow-xl">
             {nav}
             {userBlock}
           </aside>
@@ -239,7 +251,7 @@ export function DashboardShell({
       ) : null}
 
       <main className="min-w-0 flex-1 pt-14 lg:pt-0">
-        <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
+        <div className="mx-auto w-full max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
           {children}
         </div>
       </main>

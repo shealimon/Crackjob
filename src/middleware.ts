@@ -77,7 +77,14 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
+  // Only auth-gated pages. A broad matcher + Next 16 Turbopack "proxy" makes
+  // unrelated routes (/, /api/auth/session, …) return HTML 404s in dev.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard",
+    "/dashboard/:path*",
+    "/auth/desktop",
+    "/auth/desktop/:path*",
+    "/login",
+    "/signup",
   ],
 };

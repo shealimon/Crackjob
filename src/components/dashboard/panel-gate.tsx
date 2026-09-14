@@ -20,7 +20,7 @@ export function DashboardPanelGate({
   requireUsage = false,
 }: {
   children: (data: DashboardPayload) => React.ReactNode;
-  /** Usage/spending need the 14-day series — fetch on demand, not on every dashboard mount. */
+  /** Usage needs the 14-day series — fetch on demand, not on every dashboard mount. */
   requireUsage?: boolean;
 }) {
   const { data, loading, refresh } = useDashboardData();

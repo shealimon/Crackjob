@@ -5,8 +5,8 @@ import { useDashboardData } from "@/components/dashboard/dashboard-data";
 import { useDashboardNav } from "@/components/dashboard/nav";
 import { BillingPanel } from "@/components/dashboard/billing-panel";
 import { OverviewPanel } from "@/components/dashboard/overview-panel";
+import { QuestionsPanel } from "@/components/dashboard/questions-panel";
 import { SettingsPanel } from "@/components/dashboard/settings-panel";
-import { SpendingPanel } from "@/components/dashboard/spending-panel";
 import { UsagePanel } from "@/components/dashboard/usage-panel";
 
 function PanelSkeleton() {
@@ -30,27 +30,40 @@ export function DashboardView() {
   const { data, loading, refresh } = useDashboardData();
   const route = normalizePath(path);
   const needsUsage =
-    route === "/dashboard/usage" || route === "/dashboard/spending";
-  const fetchedUsage = useRef(false);
-  const [usageLoading, setUsageLoading] = useState(
-    () => needsUsage && Boolean(data && data.usageByDay.length === 0),
-  );
+    route === "/dashboard" || route === "/dashboard/usage";
+  const needsBilling = route === "/dashboard/billing";
+  const needsProfile = route === "/dashboard/settings";
+  const fetched = useRef(new Set<string>());
+  const [extraLoading, setExtraLoading] = useState(false);
 
   useEffect(() => {
-    if (!needsUsage || !data || data.usageByDay.length > 0 || fetchedUsage.current) {
-      setUsageLoading(false);
+    if (!data) return;
+
+    let key: string | null = null;
+    if (needsBilling) key = "billing";
+    else if (needsUsage && data.usageByDay.length === 0) key = "usage";
+    else if (needsProfile) key = "profile";
+
+    if (!key || fetched.current.has(key)) {
+      setExtraLoading(false);
       return;
     }
-    fetchedUsage.current = true;
+
+    fetched.current.add(key);
     let cancelled = false;
-    setUsageLoading(true);
+    // Don't block settings UI on profile refresh.
+    if (key !== "profile") setExtraLoading(true);
     void refresh().finally(() => {
-      if (!cancelled) setUsageLoading(false);
+      if (!cancelled) setExtraLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [needsUsage, data, refresh]);
+  }, [needsBilling, needsUsage, needsProfile, data, refresh]);
+
+  if (route === "/dashboard/questions") {
+    return <QuestionsPanel />;
+  }
 
   if (!data) {
     if (loading) return <PanelSkeleton />;
@@ -61,7 +74,13 @@ export function DashboardView() {
     );
   }
 
-  if (needsUsage && usageLoading && data.usageByDay.length === 0) {
+  // Overview can render plan cards immediately; heatmap fills in after usage fetch.
+  const overviewReady = route === "/dashboard";
+  if (
+    extraLoading &&
+    !overviewReady &&
+    ((needsUsage && data.usageByDay.length === 0) || needsBilling)
+  ) {
     return <PanelSkeleton />;
   }
 
@@ -70,8 +89,6 @@ export function DashboardView() {
       return <SettingsPanel initial={data} />;
     case "/dashboard/usage":
       return <UsagePanel initial={data} />;
-    case "/dashboard/spending":
-      return <SpendingPanel initial={data} />;
     case "/dashboard/billing":
       return <BillingPanel initial={data} />;
     case "/dashboard":

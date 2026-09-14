@@ -11,10 +11,8 @@ datasource db {
 /// Login identity only — no billing or AI fields here.
 model User {
   id            String    @id @default(cuid())
-  name          String?
   email         String?   @unique
   emailVerified DateTime?
-  mobileno      String?
   passwordHash  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -23,19 +21,34 @@ model User {
   sessions            Session[]
   profile             Profile?
   subscription        Subscription?
+  payments            Payment[]
   aiUsages            AiUsage[]
   desktopSessions     DesktopSession[]
   interviewQuestions  InterviewQuestion[]
 }
 
-/// Thin profile — CV is the main context source.
+/// Job / candidate profile — CV + role context for AI.
 model Profile {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  targetRole String?
-  resumeText String?  @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  firstName           String?
+  lastName            String?
+  /// E.164 dial code, e.g. +91
+  countryCode         String   @default("+91")
+  mobileNo            String?
+  jobRole             String?
+  currentCompany      String?
+  yearsOfExperience   Float?
+  linkedinUrl         String?
+  currentLocation     String?
+  preferredLocations  String?
+  preferredStack      String?
+  resumeText          String?  @db.Text
+  resumeFileName      String?
+  resumeFilePath      String?
+  resumeMimeType      String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -62,12 +75,35 @@ model Subscription {
   @@index([plan, status])
 }
 
+/// One Razorpay checkout attempt / receipt (users can pay repeatedly).
+model Payment {
+  id                 String    @id @default(cuid())
+  userId             String
+  /// month_1 | month_3 | year
+  plan               String
+  amountPaise        Int
+  currency           String    @default("INR")
+  /// created | paid | failed
+  status             String    @default("created")
+  razorpayOrderId    String    @unique
+  razorpayPaymentId  String?   @unique
+  razorpaySignature  String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  paidAt             DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
 /// One row per AI solve — used for daily usage charts.
 model AiUsage {
   id           String   @id @default(cuid())
   userId       String
-  mode         String
-  status       String
+  /// OpenAI (or demo) model id used for this solve
+  model        String
   inputTokens  Int      @default(0)
   outputTokens Int      @default(0)
   creditsUsed  Int      @default(0)

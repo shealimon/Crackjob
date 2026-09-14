@@ -94,19 +94,19 @@ export const PLAN_PACKS = [
   {
     id: "month_1",
     name: "1 month",
-    priceLabel: "₹9,999",
+    priceLabel: "₹4,999",
     note: "Full answers for 30 days",
   },
   {
     id: "month_3",
     name: "3 months",
-    priceLabel: "₹19,999",
+    priceLabel: "₹12,499",
     note: "Full answers for 90 days",
   },
   {
     id: "year",
     name: "Yearly",
-    priceLabel: "₹49,999",
+    priceLabel: "₹44,999",
     note: "Full answers for 12 months",
     featured: true,
   },

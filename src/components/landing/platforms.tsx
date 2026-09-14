@@ -1,68 +1,78 @@
-"use client";
-
-import { useState } from "react";
 import { PLATFORMS } from "@/components/landing/data";
-import { SectionEyebrow } from "@/components/landing/ui";
-import { PRODUCT_NAME } from "@/lib/constants";
+
+const VERIFIED = "#22c55e";
+
+function ShieldCheck() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" aria-hidden="true">
+      <path
+        d="M12 3.2 5.5 5.8v5.4c0 4.15 2.75 7.95 6.5 9.1 3.75-1.15 6.5-4.95 6.5-9.1V5.8L12 3.2z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m9.2 12.1 1.9 1.9 3.7-3.9"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function Platforms() {
-  const [open, setOpen] = useState<string | null>(PLATFORMS[0].n);
-
   return (
-    <section className="bg-background px-5 py-[70px] md:py-16">
-      <div className="mx-auto w-full max-w-4xl">
-        <SectionEyebrow>Reliability Standard</SectionEyebrow>
-        <h2 className="text-center text-3xl font-semibold tracking-[-0.03em] sm:text-5xl">
-          Undetectable. Tested daily across every interview app.
-        </h2>
-        <ul className="mt-12 divide-y divide-[#1E1E1E] overflow-hidden rounded-2xl border border-[#1E1E1E]">
-          {PLATFORMS.map((platform) => {
-            const expanded = open === platform.n;
-            return (
-              <li key={platform.n} className="bg-[#191919]">
-                <button
-                  type="button"
-                  onClick={() => setOpen(expanded ? null : platform.n)}
-                  className="flex w-full items-center gap-4 px-5 py-4 text-left"
-                >
-                  <span className="w-10 font-mono text-[12px] text-white/40">{platform.n}</span>
-                  <span className="grid size-9 place-items-center rounded-lg bg-white/5 text-[11px] font-semibold">
-                    {platform.name.slice(0, 2)}
-                  </span>
-                  <span className="flex-1 text-sm font-medium">{platform.name}</span>
-                  <span className="hidden text-[12px] text-white/40 sm:inline">
-                    Last updated {platform.updated}
-                  </span>
-                  <span className="rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-medium text-accent">
-                    Undetectable
-                  </span>
-                  <svg
-                    viewBox="0 0 20 20"
-                    className={`size-4 text-white/40 transition ${expanded ? "rotate-180" : ""}`}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                  >
-                    <path d="M5 8l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                {expanded ? (
-                  <div className="px-5 pb-5 pl-[4.5rem] text-sm leading-6 text-white/60">
-                    Watch how it stays undetectable on {platform.name}. 100% uptime on the
-                    screen-share path {PRODUCT_NAME} uses.
-                  </div>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-        <div className="mt-4 rounded-2xl border border-[#1E1E1E] bg-[#191919] p-6">
-          <h3 className="text-lg font-medium">and almost all the interview softwares...</h3>
-          <p className="mt-2 text-sm leading-6 text-white/60">
-            Daily testing and real-world checks keep {PRODUCT_NAME} fully undetectable. Because
-            interview platforms use the same screen-share tech, it stays invisible everywhere.
+    <section id="platforms" className="scroll-mt-24 px-5 py-16 md:py-20">
+      <div className="mx-auto w-full max-w-[88rem]">
+        <div className="flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:flex-wrap sm:gap-x-3">
+          <p className="inline-flex items-center gap-2 font-display text-base font-semibold tracking-tight text-white sm:text-lg">
+            <span style={{ color: VERIFIED }}>
+              <ShieldCheck />
+            </span>
+            We check it stays invisible on every one of these
           </p>
+          <p className="text-sm text-white/45">Checked daily</p>
         </div>
+
+        <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8 lg:gap-3">
+          {PLATFORMS.map((platform) => (
+            <li key={platform.id}>
+              <article className="flex h-full min-h-[168px] flex-col rounded-2xl border border-line bg-surface p-4 transition hover:border-accent/35 hover:bg-surface-2 sm:min-h-[180px] sm:p-5">
+                <div className="flex flex-1 items-center justify-center py-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- mixed SVG/PNG brand marks */}
+                  <img
+                    src={platform.logo}
+                    alt={`${platform.name} logo`}
+                    width={56}
+                    height={56}
+                    className="size-12 object-contain sm:size-14"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="mt-auto flex flex-col items-center text-center">
+                  <p className="font-display text-[13px] font-semibold leading-snug tracking-tight text-white sm:text-sm">
+                    {platform.name}
+                  </p>
+                  <p className="mt-2 inline-flex items-center gap-2 text-[12px] text-white/45">
+                    <span
+                      className="inline-block rounded-full"
+                      style={{ width: 6, height: 6, backgroundColor: VERIFIED }}
+                      aria-hidden="true"
+                    />
+                    Verified
+                  </p>
+                </div>
+              </article>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-6 text-center text-sm text-white/40">
+          Same screen-share path across every platform above.
+        </p>
       </div>
     </section>
   );

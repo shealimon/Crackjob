@@ -1,10 +1,37 @@
 import OpenAI from "openai";
 import { getAiConfig } from "@/lib/ai";
 
-// whisper-1 is typically faster for short utterances; override with OPENAI_WHISPER_MODEL if needed.
-const WHISPER_MODEL = process.env.OPENAI_WHISPER_MODEL || "whisper-1";
-const TRANSCRIBE_PROMPT =
-  "Job interview. Transcribe the interviewer's spoken question exactly. Keep programming tokens as spoken or conventional spellings (args, kwargs, *args, **kwargs, O(n), API, JSON). Fix obvious speech-to-text errors. Ignore filler words like uh, um. No commentary.";
+/**
+ * File/chunk STT (our WASAPI peek/take path):
+ *   gpt-transcribe — recommended, ~$0.0045/min, streams file deltas
+ * Live continuous STT (needs Realtime WebSocket — not this module):
+ *   gpt-live-transcribe — ~$0.017/min
+ * Override with OPENAI_WHISPER_MODEL.
+ */
+const WHISPER_MODEL = process.env.OPENAI_WHISPER_MODEL || "gpt-transcribe";
+
+/** Context only — new gpt-transcribe models reject task-style prompts. */
+const TRANSCRIBE_CONTEXT =
+  "Live job interview. Coding / DSA / system design discussion with programming terms.";
+
+const INTERVIEW_KEYWORDS = [
+  "O(n)",
+  "API",
+  "JSON",
+  "kwargs",
+  "args",
+  "mutex",
+  "semaphore",
+  "LRU",
+  "BFS",
+  "DFS",
+  "DP",
+  "hashmap",
+  "PostgreSQL",
+  "Redis",
+  "Kubernetes",
+] as const;
+
 let openaiClient: OpenAI | null = null;
 
 function getClient(): OpenAI {
@@ -59,6 +86,74 @@ export function meetingLanguageToWhisperCode(language?: string): string | undefi
   return undefined;
 }
 
+/** gpt-transcribe / gpt-live-transcribe use `languages[]`; Whisper / 4o use `language`. */
+function usesLanguagesArray(model: string) {
+  return /^(gpt-transcribe|gpt-live-transcribe)/i.test(model.trim());
+}
+
+function supportsStreamingModel(model: string) {
+  return /transcribe/i.test(model) && !/^whisper-1$/i.test(model);
+}
+
+function scrubPromptEcho(text: string) {
+  const trimmed = text.trim();
+  if (
+    /\b(ignore filler words|no commentary|job interview\.?\s*transcribe|transcribe the interviewer'?s spoken question|live job interview\.?\s*coding)\b/i.test(
+      trimmed,
+    )
+  ) {
+    return "";
+  }
+  return trimmed;
+}
+
+function durationFromWav(bytes: Buffer, apiDuration?: number) {
+  const sampleRate = 16000;
+  const pcmBytes = Math.max(0, bytes.length - 44);
+  return typeof apiDuration === "number" ? apiDuration : pcmBytes / (sampleRate * 2);
+}
+
+function buildCreateParams(
+  file: File,
+  language: string | undefined,
+  stream: true,
+): OpenAI.Audio.TranscriptionCreateParamsStreaming;
+function buildCreateParams(
+  file: File,
+  language: string | undefined,
+  stream: false,
+): OpenAI.Audio.TranscriptionCreateParamsNonStreaming;
+function buildCreateParams(
+  file: File,
+  language: string | undefined,
+  stream: boolean,
+): OpenAI.Audio.TranscriptionCreateParams {
+  const code = meetingLanguageToWhisperCode(language);
+  const model = WHISPER_MODEL;
+
+  if (usesLanguagesArray(model)) {
+    return {
+      model,
+      file,
+      prompt: TRANSCRIBE_CONTEXT,
+      keywords: [...INTERVIEW_KEYWORDS],
+      ...(code ? { languages: [code] } : {}),
+      stream: stream ? true : false,
+    };
+  }
+
+  // Legacy whisper-1 / gpt-4o-*-transcribe
+  return {
+    model,
+    file,
+    ...(code ? { language: code } : {}),
+    ...(code === "en" ? { prompt: TRANSCRIBE_CONTEXT } : {}),
+    response_format: "json",
+    temperature: 0,
+    stream: stream ? true : false,
+  };
+}
+
 export async function transcribeWavBuffer(
   bytes: Buffer,
   language?: string,
@@ -76,35 +171,73 @@ export async function transcribeWavBuffer(
   const file = new File([Uint8Array.from(bytes)], "meeting.wav", {
     type: "audio/wav",
   });
-  const whisperLanguage = meetingLanguageToWhisperCode(language);
 
-  const result = await client.audio.transcriptions.create({
-    model: WHISPER_MODEL,
-    file,
-    language: whisperLanguage,
-    ...(whisperLanguage === "en" ? { prompt: TRANSCRIBE_PROMPT } : {}),
-    response_format: "json",
-    // Prefer speed over verbose timestamps for short interview clips.
-    temperature: 0,
-  });
+  const result = await client.audio.transcriptions.create(
+    buildCreateParams(file, language, false),
+  );
 
-  const text = (result.text ?? "").trim();
-  const sampleRate = 16000;
-  const pcmBytes = Math.max(0, bytes.length - 44);
+  const text = scrubPromptEcho(result.text ?? "");
   const apiDuration = (result as { duration?: number }).duration;
-  const durationSec =
-    typeof apiDuration === "number" ? apiDuration : pcmBytes / (sampleRate * 2);
+  return { text, durationSec: durationFromWav(bytes, apiDuration) };
+}
 
-  // Whisper sometimes echoes its own prompt on short/noisy clips.
-  if (
-    /\b(ignore filler words|no commentary|job interview\.?\s*transcribe|transcribe the interviewer'?s spoken question)\b/i.test(
-      text,
-    )
-  ) {
-    return { text: "", durationSec };
+/**
+ * Stream partial transcript text as soon as the model emits deltas.
+ * Falls back to a single non-stream call when the model is whisper-1.
+ */
+export async function transcribeWavBufferStreaming(
+  bytes: Buffer,
+  language: string | undefined,
+  onPartial: (text: string) => void,
+): Promise<{ text: string; durationSec: number }> {
+  const config = getAiConfig();
+  if (config.demoMode && process.env.AI_DEMO_MODE === "true") {
+    return { text: "", durationSec: 0 };
+  }
+  if (bytes.length < 1000) {
+    return { text: "", durationSec: 0 };
   }
 
-  return { text, durationSec };
+  if (!supportsStreamingModel(WHISPER_MODEL)) {
+    const result = await transcribeWavBuffer(bytes, language);
+    if (result.text) onPartial(result.text);
+    return result;
+  }
+
+  const client = getClient();
+  const file = new File([Uint8Array.from(bytes)], "meeting.wav", {
+    type: "audio/wav",
+  });
+
+  const stream = await client.audio.transcriptions.create(
+    buildCreateParams(file, language, true),
+  );
+
+  let text = "";
+  for await (const event of stream) {
+    const ev = event as {
+      type?: string;
+      delta?: string;
+      text?: string;
+    };
+    if (ev.type === "transcript.text.delta" && typeof ev.delta === "string") {
+      text += ev.delta;
+      const cleaned = scrubPromptEcho(text);
+      if (cleaned) onPartial(cleaned);
+    } else if (ev.type === "transcript.text.done" && typeof ev.text === "string") {
+      text = ev.text;
+    } else if (typeof ev.delta === "string") {
+      text += ev.delta;
+      const cleaned = scrubPromptEcho(text);
+      if (cleaned) onPartial(cleaned);
+    } else if (typeof ev.text === "string" && ev.text.trim()) {
+      text = ev.text;
+    }
+  }
+
+  text = scrubPromptEcho(text);
+  if (text) onPartial(text);
+  return { text, durationSec: durationFromWav(bytes) };
 }
 
 export async function transcribeWavBase64(

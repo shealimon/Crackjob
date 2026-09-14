@@ -3,12 +3,15 @@ import { requireUser } from "@/lib/api-auth";
 import { json, optionsCors } from "@/lib/http";
 import {
   listInterviewQuestions,
+  listInterviewQuestionsPage,
   upsertInterviewDayFiles,
 } from "@/lib/interview-questions";
 
 const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
   cursor: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(50).optional(),
 });
 
 const batchSchema = z.object({
@@ -39,10 +42,21 @@ export async function GET(request: Request) {
   const parsed = querySchema.safeParse({
     limit: url.searchParams.get("limit") || undefined,
     cursor: url.searchParams.get("cursor") || undefined,
+    page: url.searchParams.get("page") || undefined,
+    pageSize: url.searchParams.get("pageSize") || undefined,
   });
 
   if (!parsed.success) {
     return json({ error: "Invalid query" }, { status: 400 });
+  }
+
+  // Website dashboard: page-based list with questions text only.
+  if (parsed.data.page != null || parsed.data.pageSize != null) {
+    const result = await listInterviewQuestionsPage(authed.userId, {
+      page: parsed.data.page,
+      pageSize: parsed.data.pageSize,
+    });
+    return json(result);
   }
 
   const questions = await listInterviewQuestions(authed.userId, parsed.data);
