@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { PanelLoading } from "@/components/dashboard/panel-loading";
+import { Spinner } from "@/components/loading-button";
 
 type DayQuestions = {
   date: string;
@@ -93,12 +95,7 @@ export function QuestionsPanel() {
       </div>
 
       <div className="flex-1 space-y-4">
-        {loading && !data ? (
-          <div className="animate-pulse space-y-4">
-            <div className="h-28 rounded-2xl border border-black/8 bg-white" />
-            <div className="h-28 rounded-2xl border border-black/8 bg-white" />
-          </div>
-        ) : null}
+        {loading && !data ? <PanelLoading label="Loading questions…" /> : null}
 
         {error ? (
           <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/60">
@@ -146,7 +143,14 @@ export function QuestionsPanel() {
         ))}
 
         {loading && data ? (
-          <p className="text-center text-xs text-black/40">Loading…</p>
+          <div
+            className="flex items-center justify-center gap-2 py-3 text-xs text-black/45"
+            role="status"
+            aria-live="polite"
+          >
+            <Spinner className="size-3.5" />
+            Loading…
+          </div>
         ) : null}
       </div>
 

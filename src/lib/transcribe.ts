@@ -158,11 +158,6 @@ export async function transcribeWavBuffer(
   bytes: Buffer,
   language?: string,
 ): Promise<{ text: string; durationSec: number }> {
-  const config = getAiConfig();
-  if (config.demoMode && process.env.AI_DEMO_MODE === "true") {
-    return { text: "", durationSec: 0 };
-  }
-
   if (bytes.length < 1000) {
     return { text: "", durationSec: 0 };
   }
@@ -190,10 +185,6 @@ export async function transcribeWavBufferStreaming(
   language: string | undefined,
   onPartial: (text: string) => void,
 ): Promise<{ text: string; durationSec: number }> {
-  const config = getAiConfig();
-  if (config.demoMode && process.env.AI_DEMO_MODE === "true") {
-    return { text: "", durationSec: 0 };
-  }
   if (bytes.length < 1000) {
     return { text: "", durationSec: 0 };
   }

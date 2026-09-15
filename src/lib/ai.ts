@@ -1,9 +1,9 @@
 import OpenAI from "openai";
-import { DEMO_SOLVE_CREDITS, type InterviewModeId } from "@/lib/constants";
+import type { InterviewModeId } from "@/lib/constants";
 import { prepareVisionImage } from "@/lib/image";
 import {
+  buildScreenshotStreamPrompt,
   buildStreamPrompt,
-  demoSolve,
   formatResumeContext,
   normalizeExtractedQuestion,
   questionNeedsResume,
@@ -53,7 +53,7 @@ let openaiClient: OpenAI | null = null;
 
 export function getAiConfig(): AiConfig {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
-  const demoMode = process.env.AI_DEMO_MODE === "true" || !apiKey;
+  const demoMode = !apiKey;
   const baseUrl = (process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(
     /\/$/,
     "",
@@ -113,11 +113,11 @@ function getMaxOutputTokens() {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 2400;
 }
 
-/** Screenshot answers use the same quality bar as audio — don't truncate mid-solution. */
+/** Screenshot answers — keep cap modest so first tokens arrive faster. */
 function getScreenshotAnswerMaxTokens() {
-  const parsed = Number(process.env.OPENAI_SCREENSHOT_MAX_TOKENS ?? "2400");
-  if (!Number.isFinite(parsed) || parsed <= 0) return getMaxOutputTokens();
-  return Math.min(Math.max(Math.floor(parsed), 400), getMaxOutputTokens());
+  const parsed = Number(process.env.OPENAI_SCREENSHOT_MAX_TOKENS ?? "500");
+  if (!Number.isFinite(parsed) || parsed <= 0) return 500;
+  return Math.min(Math.max(Math.floor(parsed), 300), getMaxOutputTokens());
 }
 
 function looksLikeDesignQuestion(question: string, mode?: string) {
@@ -128,10 +128,11 @@ function looksLikeDesignQuestion(question: string, mode?: string) {
 }
 
 function getAnswerMaxTokens(options: SolveOptions, question: string) {
-  const base = options.imageBase64 && !options.questionText?.trim()
-    ? getScreenshotAnswerMaxTokens()
-    : getMaxOutputTokens();
-  if (looksLikeDesignQuestion(question, options.mode)) {
+  const isShot = Boolean(options.imageBase64) && !options.questionText?.trim();
+  const base = isShot ? getScreenshotAnswerMaxTokens() : getMaxOutputTokens();
+  // Screenshot keeps the configured cap — HLD/LLD mode used to bump to 2800 and
+  // delay first tokens by seconds even for simple on-screen asks.
+  if (!isShot && looksLikeDesignQuestion(question, options.mode)) {
     return Math.max(base, 2800);
   }
   return base;
@@ -197,32 +198,25 @@ SHORT: <≤12 words — UI label, e.g. problem name or first clause of a theory 
 FULL: <complete question the candidate must answer; 2–8 sentences max; keep inputs/outputs/constraints for coding; quote plain-text questions verbatim when short>`;
 
 const SCREENSHOT_INSTRUCTION =
-  `Read the interview question in this screenshot (editor/IDE/doc/coding site). Ignore Crack UI/overlay and login chrome. Never say you cannot view images.
-
-Reply exactly:
-Q: <≤15 word label of the visible question>
-Then the full candidate answer for that question (same depth as an audio interview answer). Include approach + code for coding problems, clarification first for open-ended design, etc. No preamble.`;
+  `Answer the on-screen interview question (editor/IDE/doc/coding site). Ignore Crack UI/overlay and login chrome. Never say you cannot view images. No preamble.`;
 
 function pickStreamModel(options: SolveOptions, config: AiConfig) {
-  if (options.imageBase64) return config.visionModel || config.fastModel;
-  // Live voice / pasted text — fastModel for sub-second TTFT (main model was ~2s+).
-  return config.fastModel || config.model;
+  // Speed-first: voice AND screenshot answers use fastModel (nano).
+  // visionModel only for extract fallback — mini was ~1–3s TTFT on shots.
+  return config.fastModel || (options.imageBase64 ? config.visionModel : config.model);
 }
 
 async function buildStreamUserContent(
   options: SolveOptions,
 ): Promise<string | UserContent[]> {
   if (options.questionText?.trim() && !options.imageBase64) {
-    const resumeBlock = formatResumeContext(options.extraContext?.trim() || "");
-    const parts = [`Question:\n${options.questionText.trim()}`];
-    if (resumeBlock) {
-      parts.push(resumeBlock);
-    }
-    return parts.join("\n\n");
+    return buildAnswerUserText(options, options.questionText.trim());
   }
 
   if (options.imageBase64) {
     // Primary screenshot path: single vision call streams the candidate answer.
+    // Do NOT attach resume here — 8k resume tokens wreck vision TTFT; coding screenshots
+    // are the common case. Voice/HR still gets resume via the text path.
     const prepared = await prepareVisionImage(options.imageBase64, options.mimeType);
     const parts: string[] = [];
     if (options.conversationContext?.trim()) {
@@ -231,6 +225,7 @@ async function buildStreamUserContent(
       );
     }
     parts.push(SCREENSHOT_INSTRUCTION);
+
     return [
       { type: "text", text: parts.join("\n\n") },
       {
@@ -346,11 +341,11 @@ function buildAnswerUserText(options: SolveOptions, question: string) {
       `${options.conversationContext.trim()}
 
 FOLLOW-UP RULES for the new question below:
-- Answer ONLY the latest question text. Do not re-solve or paraphrase a previous question.
-- If it continues the prior thread (other/another approach, optimize, edge case, complexity, code, dry run, "what if", same problem), answer ONLY the new ask using the prior Q&A — do NOT restart or repeat the same solution.
-- If they ask for another approach/solution, give a DIFFERENT valid approach with code/complexity as needed — not a paraphrase of the previous answer.
-- If the new ask is a clearly unrelated topic, ignore the prior Q&A completely and answer the new question on its own.
-- Sound like a real candidate speaking in the interview — natural, first-person, and concise.`,
+- The interviewer may ask ANYTHING next (code, example, why, trade-offs, use cases, edge case, another approach, deeper detail, "what if", etc.).
+- Answer ONLY that latest ask. Use the prior Q&A as context for the same thread — do not restart or repeat the full previous answer.
+- Stay on the MOST RECENT prior topic. Never pull in or re-paste an older unrelated problem's solution.
+- If the new ask is clearly a different topic, ignore the prior Q&A and answer it on its own.
+- Sound like a real candidate — natural, first-person, and concise.`,
     );
   }
 
@@ -358,31 +353,30 @@ FOLLOW-UP RULES for the new question below:
     const summary = analyzeResumeExperience(resumeText);
     const yearsRule = summary.shouldMentionYears && summary.yearsLabel
       ? `Total experience across ALL companies in the resume is ${summary.yearsLabel} — use that if mentioning years, never a smaller guess like 5 years.`
-      : "Do NOT state a total years-of-experience number — describe the candidate's career across the companies and roles listed in the resume instead.";
+      : "Do NOT state a total years-of-experience number unless the resume/profile clearly supports it — describe the candidate's career across the companies and roles listed instead.";
     parts.push(
-      `IMPORTANT: Personal background question. Answer ONLY from the resume below. ${yearsRule} Mention real company names and roles from the resume — never invent a generic "tech company", degree, or tenure.`,
+      `IMPORTANT: This is an HR / resume / behavioral question. Answer ONLY from the resume and profile context below. ${yearsRule} Mention real company names, titles, projects, and technologies from that context — never invent a generic "tech company", degree, tenure, salary figure, or notice period. If salary, notice, or joining date are missing, say you are open to discuss / flexible in one short sentence — do not fabricate numbers.`,
     );
   }
 
   parts.push(`Question:\n${question}`);
 
-  const resumeBlock = formatResumeContext(resumeText);
-  if (resumeBlock) {
-    parts.push(resumeBlock);
+  if (needsResume) {
+    const resumeBlock = formatResumeContext(resumeText);
+    if (resumeBlock) {
+      parts.push(resumeBlock);
+    }
   }
   return parts.join("\n\n");
 }
 
-function streamPromptOptions(options: SolveOptions, answerOnly?: boolean) {
+function streamPromptOptions(options: SolveOptions) {
   const resumeText = options.extraContext?.trim() || "";
   return {
     companyPack: options.companyPack,
     outputLanguage: options.outputLanguage,
     codeLanguage: options.codeLanguage,
-    answerOnly,
-    fromScreenshot: Boolean(options.imageBase64) && !options.questionText?.trim(),
     hasResume: Boolean(resumeText),
-    resumeText,
   };
 }
 
@@ -391,30 +385,6 @@ function answerTemperature(options: SolveOptions, question: string) {
   if (resumeText && questionNeedsResume(question)) return 0;
   if (resumeText) return 0.1;
   return 0.2;
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function* demoStreamSolve(options: SolveOptions): AsyncGenerator<StreamSolveEvent> {
-  const demo = demoSolve(options.mode);
-  const text = `Q: ${demo.headline}\nA:\n${demo.solution}`;
-  let acc = "";
-  for (const char of text) {
-    acc += char;
-    yield { type: "delta", text: acc, result: streamTextToResult(acc) };
-    await sleep(char === "\n" ? 8 : 4);
-  }
-  yield {
-    type: "done",
-    text: acc,
-    result: streamTextToResult(acc),
-    inputTokens: DEMO_SOLVE_CREDITS,
-    outputTokens: 0,
-    demo: true,
-    model: "demo",
-  };
 }
 
 async function* streamCheapTwoStep(options: SolveOptions): AsyncGenerator<StreamSolveEvent> {
@@ -444,7 +414,7 @@ async function* streamCheapTwoStep(options: SolveOptions): AsyncGenerator<Stream
     return;
   }
 
-  const prompt = buildStreamPrompt(options.mode, streamPromptOptions(options, true));
+  const prompt = buildStreamPrompt(options.mode, streamPromptOptions(options));
   const client = getOpenAiClient();
   const config = getAiConfig();
   const design = looksLikeDesignQuestion(fullQuestion, options.mode);
@@ -500,9 +470,17 @@ async function* streamCheapTwoStep(options: SolveOptions): AsyncGenerator<Stream
 async function* streamFastSingleCall(options: SolveOptions): AsyncGenerator<StreamSolveEvent> {
   const t0 = Date.now();
   const config = getAiConfig();
-  const isShot = Boolean(options.imageBase64);
-  // Same quality system prompt as audio — tiny screenshot prompts produced weak DSA/HLD answers.
-  const prompt = buildStreamPrompt(options.mode, streamPromptOptions(options));
+  const isShot = Boolean(options.imageBase64) && !options.questionText?.trim();
+  // Screenshot: lean vision prompt (full smart prompt was ~2–3s TTFT tax).
+  // Audio / pasted text: full quality prompt.
+  const prompt = isShot
+    ? buildScreenshotStreamPrompt({
+        codeLanguage: options.codeLanguage,
+        companyPack: options.companyPack,
+        outputLanguage: options.outputLanguage,
+        mode: options.mode,
+      })
+    : buildStreamPrompt(options.mode, streamPromptOptions(options));
   const userContent = await buildStreamUserContent(options);
   const tPrep = Date.now();
   const client = getOpenAiClient();
@@ -566,10 +544,6 @@ async function* streamFastSingleCall(options: SolveOptions): AsyncGenerator<Stre
 export async function* streamSolve(options: SolveOptions): AsyncGenerator<StreamSolveEvent> {
   const config = getAiConfig();
   if (config.demoMode) {
-    if (process.env.AI_DEMO_MODE === "true") {
-      yield* demoStreamSolve(options);
-      return;
-    }
     throw new Error("OpenAI API key is not configured on the server");
   }
 
@@ -607,14 +581,6 @@ export async function runSolve(
 
   const config = getAiConfig();
   if (config.demoMode) {
-    if (process.env.AI_DEMO_MODE === "true") {
-      return {
-        result: demoSolve(options.mode),
-        inputTokens: DEMO_SOLVE_CREDITS,
-        outputTokens: 0,
-        demo: true,
-      };
-    }
     throw new Error("OpenAI API key is not configured on the server");
   }
 

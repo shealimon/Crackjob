@@ -2,18 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useDashboardData } from "@/components/dashboard/dashboard-data";
+import { PanelLoading } from "@/components/dashboard/panel-loading";
 import type { DashboardPayload } from "@/lib/dashboard-data";
-
-function PanelSkeleton() {
-  return (
-    <div className="animate-pulse space-y-6">
-      <div className="h-8 w-48 rounded-lg bg-black/8" />
-      <div className="h-4 w-72 rounded bg-black/6" />
-      <div className="h-40 rounded-2xl border border-black/8 bg-white" />
-      <div className="h-40 rounded-2xl border border-black/8 bg-white" />
-    </div>
-  );
-}
 
 export function DashboardPanelGate({
   children,
@@ -46,7 +36,7 @@ export function DashboardPanelGate({
   }, [requireUsage, data, refresh]);
 
   if (!data) {
-    if (loading) return <PanelSkeleton />;
+    if (loading) return <PanelLoading />;
     return (
       <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/60">
         Could not load dashboard data. Refresh the page or sign in again.
@@ -54,8 +44,12 @@ export function DashboardPanelGate({
     );
   }
 
-  if (requireUsage && usageLoading && data.usageByDay.length === 0) {
-    return <PanelSkeleton />;
+  if (
+    requireUsage &&
+    data.usageByDay.length === 0 &&
+    (usageLoading || !fetchedUsage.current)
+  ) {
+    return <PanelLoading />;
   }
 
   return <>{children(data)}</>;

@@ -28,7 +28,7 @@ const NAV_PRIMARY = [
 const NAV_ACCOUNT = [
   { href: "/dashboard/usage", label: "Usage", icon: UsageIcon },
   { href: "/dashboard/billing", label: "Billing & Invoices", icon: BillingIcon },
-  { href: "/dashboard/settings", label: "Settings", icon: SettingsIcon },
+  { href: "/dashboard/settings", label: "Profile", icon: SettingsIcon },
 ] as const;
 
 type ShellUser = {

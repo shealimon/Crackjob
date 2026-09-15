@@ -3,22 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useDashboardData } from "@/components/dashboard/dashboard-data";
 import { useDashboardNav } from "@/components/dashboard/nav";
+import { PanelLoading } from "@/components/dashboard/panel-loading";
 import { BillingPanel } from "@/components/dashboard/billing-panel";
 import { OverviewPanel } from "@/components/dashboard/overview-panel";
 import { QuestionsPanel } from "@/components/dashboard/questions-panel";
 import { SettingsPanel } from "@/components/dashboard/settings-panel";
 import { UsagePanel } from "@/components/dashboard/usage-panel";
-
-function PanelSkeleton() {
-  return (
-    <div className="animate-pulse space-y-6">
-      <div className="h-8 w-48 rounded-lg bg-black/8" />
-      <div className="h-4 w-72 rounded bg-black/6" />
-      <div className="h-40 rounded-2xl border border-black/8 bg-white" />
-      <div className="h-40 rounded-2xl border border-black/8 bg-white" />
-    </div>
-  );
-}
 
 function normalizePath(path: string) {
   if (path.length > 1 && path.endsWith("/")) return path.slice(0, -1);
@@ -35,6 +25,15 @@ export function DashboardView() {
   const needsProfile = route === "/dashboard/settings";
   const fetched = useRef(new Set<string>());
   const [extraLoading, setExtraLoading] = useState(false);
+
+  // Sync: know we still need a first fetch before useEffect runs (avoids empty flash).
+  const billingPending =
+    data != null && needsBilling && !fetched.current.has("billing");
+  const usagePending =
+    data != null &&
+    needsUsage &&
+    data.usageByDay.length === 0 &&
+    !fetched.current.has("usage");
 
   useEffect(() => {
     if (!data) return;
@@ -66,7 +65,7 @@ export function DashboardView() {
   }
 
   if (!data) {
-    if (loading) return <PanelSkeleton />;
+    if (loading) return <PanelLoading />;
     return (
       <div className="rounded-2xl border border-black/10 bg-white p-6 text-sm text-black/60">
         Could not load dashboard data. Refresh the page or sign in again.
@@ -76,12 +75,15 @@ export function DashboardView() {
 
   // Overview can render plan cards immediately; heatmap fills in after usage fetch.
   const overviewReady = route === "/dashboard";
-  if (
-    extraLoading &&
+  const waitingOnPanelData =
     !overviewReady &&
-    ((needsUsage && data.usageByDay.length === 0) || needsBilling)
-  ) {
-    return <PanelSkeleton />;
+    ((needsBilling && (billingPending || extraLoading)) ||
+      (needsUsage &&
+        data.usageByDay.length === 0 &&
+        (usagePending || extraLoading)));
+
+  if (waitingOnPanelData) {
+    return <PanelLoading />;
   }
 
   switch (route) {

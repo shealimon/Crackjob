@@ -6,6 +6,7 @@ import { streamSolve, tokensToCredits, type StreamSolveEvent } from "@/lib/ai";
 import { MODE_IDS } from "@/lib/constants";
 import { recordAiUsage } from "@/lib/credits";
 import { json, ndjsonStream, optionsCors } from "@/lib/http";
+import { resolveExtraContext } from "@/lib/resume-context";
 
 const schema = z
   .object({
@@ -64,12 +65,19 @@ export async function POST(request: Request) {
     access = await getAccessSnapshot(authed.userId);
   }
 
+  const isScreenshotOnly =
+    Boolean(body.data.imageBase64) && !body.data.questionText?.trim();
+  // Screenshot path skips resume DB merge — vision TTFT is dominated by prompt+image tokens.
+  const extraContext = isScreenshotOnly
+    ? undefined
+    : await resolveExtraContext(authed.userId, body.data.extraContext);
+
   const solveOptions = {
     mode: body.data.mode,
     imageBase64: body.data.imageBase64,
     mimeType: body.data.mimeType,
     questionText: body.data.questionText,
-    extraContext: body.data.extraContext,
+    extraContext,
     conversationContext: body.data.conversationContext,
     companyPack: body.data.companyPack,
     outputLanguage: body.data.outputLanguage,

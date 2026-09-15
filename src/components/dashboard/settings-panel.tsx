@@ -175,15 +175,16 @@ export function SettingsPanel({ initial }: { initial: DashboardPayload }) {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-black sm:text-3xl">
-          Settings
+          Profile
         </h1>
         <p className="mt-2 text-sm text-black/50">
-          Job profile used for interview answers and account details.
+          Job profile and resume used for HR, resume-based, and behavioral
+          interview answers in the desktop app.
         </p>
       </div>
 
       <section>
-        <h2 className="text-sm font-semibold text-black">Profile</h2>
+        <h2 className="text-sm font-semibold text-black">Account</h2>
         <div className="mt-3 rounded-2xl border border-black/8 bg-white px-5 sm:px-6">
           <Row label="Email">
             <p className="text-sm text-black">{data.user.email || "—"}</p>
@@ -219,7 +220,8 @@ export function SettingsPanel({ initial }: { initial: DashboardPayload }) {
                   {hasResume ? "Replace resume" : "Upload resume"}
                 </LoadingButton>
                 <p className="text-xs text-black/40">
-                  PDF, DOC, DOCX, TXT, MD, or RTF up to 8&nbsp;MB
+                  PDF, DOC, DOCX, TXT, MD, or RTF up to 8&nbsp;MB. Used for HR,
+                  resume, and behavioral interview answers in the desktop app.
                 </p>
               </div>
             </div>
