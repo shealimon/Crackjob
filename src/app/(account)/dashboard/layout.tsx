@@ -20,14 +20,14 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const userId = session?.user?.id?.trim();
-  if (!userId) {
+  const user = session?.user;
+  if (!user?.id?.trim()) {
     return clearSessionToLogin();
   }
 
   const bootstrapUser = {
-    name: session.user?.name ?? null,
-    email: session.user?.email ?? null,
+    name: user.name ?? null,
+    email: user.email ?? null,
   };
 
   return (

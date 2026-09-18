@@ -37,10 +37,10 @@ export function DeferredAppDemo() {
       };
     }
 
-    const id = window.setTimeout(enable, 1);
+    const id = setTimeout(enable, 1);
     return () => {
       cancelled = true;
-      window.clearTimeout(id);
+      clearTimeout(id);
     };
   }, []);
 
