@@ -324,7 +324,7 @@ body {
   height: 34rem;
   margin-left: calc(min(160vw, 110rem) / -2);
   border-radius: 50%;
-  will-change: transform, opacity;
+  contain: layout paint;
 }
 
 .hero-arc-top {
@@ -353,7 +353,7 @@ body {
   height: 18rem;
   margin-left: calc(min(120vw, 80rem) / -2);
   border-radius: 50%;
-  will-change: transform, opacity;
+  contain: layout paint;
 }
 
 .hero-arc-ring-top {
@@ -375,7 +375,7 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(60px);
-  will-change: transform, opacity;
+  contain: layout paint;
 }
 
 .hero-orb-a {
@@ -420,20 +420,20 @@ body {
 
 .hero-enter {
   opacity: 0;
-  transform: translateY(18px);
-  animation: hero-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform: translateY(8px);
+  animation: hero-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.hero-enter-1 { animation-delay: 0.1s; }
-.hero-enter-2 { animation-delay: 0.22s; }
-.hero-enter-3 { animation-delay: 0.34s; }
-.hero-enter-4 { animation-delay: 0.46s; }
-.hero-enter-5 { animation-delay: 0.58s; }
+.hero-enter-1 { animation-delay: 0s; }
+.hero-enter-2 { animation-delay: 0.04s; }
+.hero-enter-3 { animation-delay: 0.08s; }
+.hero-enter-4 { animation-delay: 0.12s; }
+.hero-enter-5 { animation-delay: 0.16s; }
 
 .hero-preview {
   opacity: 0;
-  transform: translateY(18px);
-  animation: hero-rise 1s cubic-bezier(0.22, 1, 0.36, 1) 0.65s forwards;
+  transform: translateY(8px);
+  animation: hero-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
 }
 
 @keyframes hero-rise {

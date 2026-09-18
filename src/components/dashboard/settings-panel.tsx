@@ -297,17 +297,22 @@ export function SettingsPanel({ initial }: { initial: DashboardPayload }) {
             />
           </Row>
 
-          <Row label="Years of Experience">
-            <input
-              type="number"
-              min={0}
-              max={60}
-              step={0.1}
-              value={form.yearsOfExperience}
-              onChange={(e) => setField("yearsOfExperience", e.target.value)}
-              className={inputClassName()}
-              placeholder="e.g. 3.5"
-            />
+          <Row label="Years of Experience" align="start">
+            <div className="w-full max-w-md">
+              <input
+                type="number"
+                min={0}
+                max={60}
+                step={0.1}
+                value={form.yearsOfExperience}
+                onChange={(e) => setField("yearsOfExperience", e.target.value)}
+                className={inputClassName()}
+                placeholder="e.g. 8"
+              />
+              <p className="mt-1.5 text-xs text-black/45">
+                Calibrates Live answer depth. If empty, years come from your resume — we never assume 5 years.
+              </p>
+            </div>
           </Row>
 
           <Row label="LinkedIn URL">

@@ -12,11 +12,15 @@ import "./globals.css";
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  // Mostly used in the deferred app-demo; don't block first paint.
+  preload: false,
 });
 
 const instrument = Instrument_Serif({
@@ -24,18 +28,21 @@ const instrument = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   style: ["normal", "italic"],
+  display: "swap",
 });
 
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const doto = Doto({
   variable: "--font-doto",
   subsets: ["latin"],
   axes: ["ROND"],
+  display: "swap",
 });
 
 export const metadata: Metadata = defaultMetadata;

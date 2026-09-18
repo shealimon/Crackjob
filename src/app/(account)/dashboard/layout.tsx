@@ -1,45 +1,40 @@
 import type { Metadata } from "next";
+import { auth } from "@/auth";
 import { DashboardDataProvider } from "@/components/dashboard/dashboard-data";
+import { DashboardFrame } from "@/components/dashboard/dashboard-frame";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
-import { DashboardNavProvider } from "@/components/dashboard/nav";
-import { DashboardShell } from "@/components/dashboard/shell";
-import { getDashboardShell } from "@/lib/dashboard-data";
+import { clearSessionToLogin } from "@/lib/clear-session-login";
 
 /** Private account area — keep out of Google index. */
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/**
+ * Fast open: JWT check only (no Prisma shell). Client shows loading, then /api/me.
+ * Skips /api/auth/session on this route (SessionProvider not mounted for /dashboard).
+ */
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const shell = await getDashboardShell();
-  const initial = {
-    user: shell.user,
-    usageByDay: [] as import("@/lib/dashboard-data").DashboardUsageDay[],
-    usageEvents: [] as import("@/lib/dashboard-data").DashboardUsageEvent[],
-    payments: [] as import("@/lib/dashboard-data").DashboardPayment[],
-    profile: shell.profile,
-    desktopSession: shell.desktopSession,
+  const session = await auth();
+  const userId = session?.user?.id?.trim();
+  if (!userId) {
+    return clearSessionToLogin();
+  }
+
+  const bootstrapUser = {
+    name: session.user?.name ?? null,
+    email: session.user?.email ?? null,
   };
 
   return (
-    <DashboardDataProvider initial={initial}>
-      <DashboardNavProvider>
-        <DashboardShell
-          user={{
-            name: shell.user.name,
-            email: shell.user.email,
-            planLabel: shell.user.planLabel,
-            fullAccess: shell.user.fullAccess,
-          }}
-        >
-          {/* Client-switched panels — instant menu nav; route pages stay for deep links. */}
-          <DashboardView />
-        </DashboardShell>
-      </DashboardNavProvider>
+    <DashboardDataProvider initial={null}>
+      <DashboardFrame bootstrapUser={bootstrapUser}>
+        <DashboardView />
+      </DashboardFrame>
       {/* Register App Router segments without blocking the shell UI. */}
       <div className="hidden" aria-hidden>
         {children}

@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BrandMark } from "@/components/brand-mark";
 import { NAV_LINKS } from "@/components/landing/data";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // Close after navigation — never unmount Link on click (cancels App Router push).
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <header className="absolute inset-x-0 top-0 z-50 bg-transparent">
       <div className="mx-auto flex h-[84px] w-full max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
-        <Link href="/" onClick={() => setOpen(false)} className="relative z-10 shrink-0">
+        <Link href="/" className="relative z-10 shrink-0">
           <BrandMark />
         </Link>
 
@@ -71,7 +78,6 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setOpen(false)}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
               >
                 {link.label}
@@ -84,14 +90,12 @@ export function SiteHeader() {
             ))}
             <Link
               href="/login"
-              onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
             >
               Login
             </Link>
             <Link
               href="/signup"
-              onClick={() => setOpen(false)}
               className="mt-2 inline-flex h-11 items-center justify-center rounded-full bg-white text-[15px] font-semibold text-[#0b0705]"
             >
               Try for Free

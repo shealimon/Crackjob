@@ -22,13 +22,13 @@ import { useDashboardNav } from "@/components/dashboard/nav";
 
 const NAV_PRIMARY = [
   { href: "/dashboard", label: "Overview", icon: OverviewIcon, exact: true },
+  { href: "/dashboard/settings", label: "Profile", icon: SettingsIcon },
   { href: "/dashboard/questions", label: "Questions", icon: QuestionsIcon },
 ] as const;
 
 const NAV_ACCOUNT = [
   { href: "/dashboard/usage", label: "Usage", icon: UsageIcon },
   { href: "/dashboard/billing", label: "Billing & Invoices", icon: BillingIcon },
-  { href: "/dashboard/settings", label: "Profile", icon: SettingsIcon },
 ] as const;
 
 type ShellUser = {

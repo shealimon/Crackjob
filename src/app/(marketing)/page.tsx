@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
+import { DeferredAppDemo } from "@/components/landing/deferred-app-demo";
 import { Hero } from "@/components/landing/hero";
-import { AppDemoSection } from "@/components/landing/app-demo-section";
 import { Platforms } from "@/components/landing/platforms";
-import { PricingSection } from "@/components/landing/pricing-section";
-import { ProofSection } from "@/components/landing/proof-section";
 import { PRODUCT_NAME } from "@/lib/constants";
 import { SEO_DESCRIPTION } from "@/lib/seo";
+
+const ProofSection = dynamic(() =>
+  import("@/components/landing/proof-section").then((m) => ({
+    default: m.ProofSection,
+  })),
+);
+
+const PricingSection = dynamic(() =>
+  import("@/components/landing/pricing-section").then((m) => ({
+    default: m.PricingSection,
+  })),
+);
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +35,7 @@ export default function Home() {
   return (
     <main className="flex-1">
       <Hero />
-      <AppDemoSection />
+      <DeferredAppDemo />
       <ProofSection />
       <PricingSection />
       <Platforms />

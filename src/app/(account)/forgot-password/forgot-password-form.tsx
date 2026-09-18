@@ -40,9 +40,13 @@ export function ForgotPasswordForm() {
 
   return (
     <div className="flex w-full max-w-[380px] flex-col items-center text-center">
-      <div className="grid size-16 place-items-center rounded-full bg-accent text-on-accent shadow-[0_0_40px_rgb(154_107_69_/_0.28)]">
+      <Link
+        href="/"
+        aria-label="Go to home"
+        className="grid size-16 place-items-center rounded-full bg-accent text-on-accent shadow-[0_0_40px_rgb(154_107_69_/_0.28)] transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      >
         <CrackMark className="size-8" />
-      </div>
+      </Link>
 
       <h1 className="mt-7 font-display text-[2rem] font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-[2.25rem]">
         Forgot Password

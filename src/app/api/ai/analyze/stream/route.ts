@@ -1,28 +1,14 @@
-import { z } from "zod";
 import { assertCanSolve, getAccessSnapshot, invalidateAccessCache } from "@/lib/access";
+import { analyzeStreamRequestSchema } from "@/lib/analyze-contract";
 import { isAuthSkipped, requireUser } from "@/lib/api-auth";
 import { applyFreeAnswerGate, type FreeAnswerTier } from "@/lib/explore-answer";
 import { streamSolve, tokensToCredits, type StreamSolveEvent } from "@/lib/ai";
-import { MODE_IDS } from "@/lib/constants";
 import { recordAiUsage } from "@/lib/credits";
 import { json, ndjsonStream, optionsCors } from "@/lib/http";
+import { resolveLiveInterviewExperience } from "@/lib/live-experience";
 import { resolveExtraContext } from "@/lib/resume-context";
 
-const schema = z
-  .object({
-    mode: z.enum(MODE_IDS),
-    questionText: z.string().max(8000).optional(),
-    imageBase64: z.string().min(20).optional(),
-    mimeType: z.string().max(40).optional(),
-    companyPack: z.string().max(80).optional(),
-    outputLanguage: z.string().max(40).optional(),
-    codeLanguage: z.string().max(40).optional(),
-    extraContext: z.string().max(8000).optional(),
-    conversationContext: z.string().max(12000).optional(),
-  })
-  .refine((data) => Boolean(data.questionText?.trim() || data.imageBase64), {
-    message: "Send mode plus questionText or imageBase64",
-  });
+const schema = analyzeStreamRequestSchema;
 
 export function OPTIONS() {
   return optionsCors();
@@ -67,10 +53,15 @@ export async function POST(request: Request) {
 
   const isScreenshotOnly =
     Boolean(body.data.imageBase64) && !body.data.questionText?.trim();
-  // Screenshot path skips resume DB merge — vision TTFT is dominated by prompt+image tokens.
-  const extraContext = isScreenshotOnly
-    ? undefined
-    : await resolveExtraContext(authed.userId, body.data.extraContext);
+  const isChatPaste = body.data.source === "text";
+  // Chat/paste: never attach resume. Voice/audio: keep resume merge (HR / projects).
+  // Screenshot: skip.
+  const extraContext =
+    isScreenshotOnly || isChatPaste
+      ? undefined
+      : await resolveExtraContext(authed.userId, body.data.extraContext);
+
+  const liveExperience = await resolveLiveInterviewExperience(authed.userId);
 
   const solveOptions = {
     mode: body.data.mode,
@@ -79,9 +70,17 @@ export async function POST(request: Request) {
     questionText: body.data.questionText,
     extraContext,
     conversationContext: body.data.conversationContext,
+    // Forward when present so fused Interactive requests can include a doc + screen.
+    // Existing voice/screenshot callers omit these fields.
+    documentContext: body.data.documentContext,
+    documentName: body.data.documentName,
     companyPack: body.data.companyPack,
     outputLanguage: body.data.outputLanguage,
     codeLanguage: body.data.codeLanguage,
+    source: body.data.source,
+    taskContext: body.data.taskContext,
+    interactiveHandsOn: body.data.interactiveHandsOn,
+    liveExperience,
   };
 
   const fullAccess = isAuthSkipped() || access.fullAccess;

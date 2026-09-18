@@ -60,14 +60,17 @@ export function DashboardDataProvider({
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/me", { cache: "no-store" });
+    if (res.status === 401) {
+      await signOut({ callbackUrl: "/login" });
+      return;
+    }
     if (!res.ok) return;
     const body = (await res.json()) as Record<string, unknown>;
     setData(asPayload(body));
   }, []);
 
   useEffect(() => {
-    // SSR shell already has user + desktop — don't block overview with /api/me.
-    // Usage pages call refresh() when they need the 14-day series.
+    // Prefer client /api/me after a fast JWT-only layout — show panel loading meanwhile.
     if (initial) {
       setLoading(false);
       return;
@@ -86,7 +89,7 @@ export function DashboardDataProvider({
         const body = (await res.json()) as Record<string, unknown>;
         if (!cancelled) setData(asPayload(body));
       } catch {
-        // Keep initial SSR payload if refresh fails.
+        // Keep null — DashboardView shows error after loading ends.
       } finally {
         if (!cancelled) setLoading(false);
       }

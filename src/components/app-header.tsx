@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { AppDownloadLink } from "@/components/app-download-link";
 import { BrandMark } from "@/components/brand-mark";
 import { NAV_LINKS } from "@/components/landing/data";
+import { isBareAuthPath } from "@/lib/bare-auth-path";
 
 function DownloadArrow({ className = "size-3.5" }: { className?: string }) {
   return (
@@ -23,13 +24,8 @@ function DownloadArrow({ className = "size-3.5" }: { className?: string }) {
   );
 }
 
-const AUTH_PATHS = new Set([
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-]);
+/** Minimal header (logo only) — not login/signup/forgot/reset (those use form logo). */
+const LOGO_ONLY_AUTH_PATHS = new Set(["/verify-email"]);
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -38,12 +34,22 @@ export function AppHeader() {
   const firstName = data?.user?.name?.split(" ")[0];
   const signedIn = status === "authenticated";
 
+  // Close after navigation — never unmount Link on click (cancels App Router push).
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   if (pathname.startsWith("/dashboard")) {
     return null;
   }
 
-  // Login / signup / auth flows: logo only (home link) — no marketing menus.
-  if (AUTH_PATHS.has(pathname)) {
+  if (isBareAuthPath(pathname)) {
+    return null;
+  }
+
+  const path = pathname.replace(/\/$/, "") || "/";
+
+  if (LOGO_ONLY_AUTH_PATHS.has(path)) {
     return (
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center px-5 md:px-8">
@@ -58,7 +64,7 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
-        <Link href="/" onClick={() => setOpen(false)} className="relative z-10 shrink-0" aria-label="Go to home">
+        <Link href="/" className="relative z-10 shrink-0" aria-label="Go to home">
           <BrandMark compact />
         </Link>
 
@@ -127,7 +133,6 @@ export function AppHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setOpen(false)}
                 className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
               >
                 {link.label}
@@ -140,15 +145,11 @@ export function AppHeader() {
             ))}
             <Link
               href="/login"
-              onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
             >
               Login
             </Link>
-            <AppDownloadLink
-              onClick={() => setOpen(false)}
-              className="mt-2 inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent text-[15px] font-semibold text-on-accent"
-            >
+            <AppDownloadLink className="mt-2 inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent text-[15px] font-semibold text-on-accent">
               Download for free
               <DownloadArrow />
             </AppDownloadLink>

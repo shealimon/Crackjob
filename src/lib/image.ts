@@ -2,10 +2,10 @@ import sharp from "sharp";
 
 const envWidth = Number(process.env.OPENAI_IMAGE_MAX_WIDTH ?? "1280");
 const MAX_WIDTH = Number.isFinite(envWidth) && envWidth >= 768 ? Math.floor(envWidth) : 1280;
-const envQuality = Number(process.env.OPENAI_IMAGE_QUALITY ?? "78");
-const JPEG_QUALITY = Number.isFinite(envQuality) && envQuality >= 65 ? Math.floor(envQuality) : 78;
-/** Desktop already ships ≤640 JPEG — skip sharp when payload looks prepped. */
-const SKIP_REPROCESS_MAX_BYTES = 350_000;
+const envQuality = Number(process.env.OPENAI_IMAGE_QUALITY ?? "80");
+const JPEG_QUALITY = Number.isFinite(envQuality) && envQuality >= 65 ? Math.floor(envQuality) : 80;
+/** Desktop already ships ≤1280 JPEG — skip sharp when payload looks prepped. */
+const SKIP_REPROCESS_MAX_BYTES = 900_000;
 
 function stripDataUrl(input: string) {
   const match = input.match(/^data:[^;]+;base64,(.+)$/);
@@ -25,7 +25,7 @@ export async function prepareVisionImage(imageBase64: string, mimeType?: string)
     mimeType?.toLowerCase().includes("jpg") ||
     isJpegMagic(raw);
 
-  // Desktop capture already resizes to ≤768 JPEG — skip sharp + avoid re-encoding base64.
+  // Desktop capture already resizes to ≤1280 JPEG — skip sharp + avoid re-encoding base64.
   if (looksJpeg && raw.length <= SKIP_REPROCESS_MAX_BYTES) {
     return {
       dataUrl: `data:image/jpeg;base64,${stripped}`,

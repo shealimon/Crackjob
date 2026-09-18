@@ -6,10 +6,12 @@ export const metadata = { title: "Reset password" };
 
 export default function ResetPasswordPage() {
   return (
-    <main className="grid-fade flex flex-1 items-center justify-center px-5 py-16">
-      <Suspense fallback={<AuthFormFallback />}>
-        <ResetPasswordForm />
-      </Suspense>
+    <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
+      <div className="flex min-h-full w-full flex-1 flex-col items-center justify-center py-10 sm:py-12">
+        <Suspense fallback={<AuthFormFallback />}>
+          <ResetPasswordForm />
+        </Suspense>
+      </div>
     </main>
   );
 }
