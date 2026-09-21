@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { PRODUCT_NAME } from "@/lib/constants";
 
-/** Canonical production site (www — matches desktop + middleware). */
-export const SITE_URL = "https://www.porpin.com";
+/** Canonical production site (matches desktop + middleware). */
+export const SITE_URL = "https://crackjob.co";
 
 export const SITE_NAME = PRODUCT_NAME;
 
@@ -35,7 +35,7 @@ export const SEO_KEYWORDS = [
   "AI interview overlay",
   "Crackjob",
   "Crackjob AI",
-  "porpin",
+  "crackjob.co",
 ];
 
 export function absoluteUrl(path = "/"): string {
@@ -99,7 +99,7 @@ export function softwareApplicationJsonLd() {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: PRODUCT_NAME,
-    alternateName: ["Crackjob AI", "Porpin Crackjob", "Crack AI Interview"],
+    alternateName: ["Crackjob AI", "Crack AI Interview"],
     url: SITE_URL,
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "AI Interview Assistant",
@@ -138,7 +138,7 @@ export function websiteJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: PRODUCT_NAME,
-    alternateName: ["Crackjob", "porpin.com"],
+    alternateName: ["Crackjob", "crackjob.co"],
     url: SITE_URL,
     description: SEO_DESCRIPTION,
   };

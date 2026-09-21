@@ -69,7 +69,7 @@ export default function OpenGraphImage() {
             letterSpacing: "0.04em",
           }}
         >
-          www.porpin.com
+          crackjob.co
         </div>
       </div>
     ),

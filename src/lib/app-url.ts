@@ -11,7 +11,7 @@ function isProductionRuntime() {
 /**
  * App origin for cookies, Auth.js, and Supabase email links.
  * - Development: AUTH_URL / localhost:43123
- * - Production (live): https://www.porpin.com (never localhost)
+ * - Production (live): https://crackjob.co (never localhost)
  */
 export function appBaseUrl() {
   const authUrl = process.env.AUTH_URL?.replace(/\/$/, "");
