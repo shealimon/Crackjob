@@ -1,8 +1,12 @@
 import { Suspense } from "react";
 import { AuthFormFallback } from "@/components/loading-button";
+import { absoluteUrl } from "@/lib/seo";
 import { ResetPasswordForm } from "./reset-password-form";
 
-export const metadata = { title: "Reset password" };
+export const metadata = {
+  title: "Reset password",
+  alternates: { canonical: absoluteUrl("/reset-password") },
+};
 
 export default function ResetPasswordPage() {
   return (

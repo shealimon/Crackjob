@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AuthFormFallback } from "@/components/loading-button";
 import { clearStaleSession } from "@/lib/clear-session-login";
+import { absoluteUrl } from "@/lib/seo";
 import { prisma } from "@/lib/prisma";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
   title: "Login",
   description: "Sign in to Crackjob — your AI interview assistant account for coding rounds and live interviews.",
-  alternates: { canonical: "/login" },
+  alternates: { canonical: absoluteUrl("/login") },
 };
 
 export default async function LoginPage() {

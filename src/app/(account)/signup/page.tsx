@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { clearStaleSession } from "@/lib/clear-session-login";
+import { absoluteUrl } from "@/lib/seo";
 import { prisma } from "@/lib/prisma";
 import { SignupForm } from "./signup-form";
 
@@ -7,7 +8,7 @@ export const metadata = {
   title: "Sign up",
   description:
     "Create a Crackjob account — AI interview application for DSA, system design, and live coding interviews.",
-  alternates: { canonical: "/signup" },
+  alternates: { canonical: absoluteUrl("/signup") },
 };
 
 export default async function SignupPage() {

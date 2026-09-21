@@ -2,20 +2,23 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { sessionTokenCookieName } from "@/lib/session-cookie";
+import { SITE_URL } from "@/lib/seo";
+
+const LEGACY_HOSTS = new Set(["porpin.com", "www.porpin.com", "www.crackjob.co"]);
 
 function canonicalHostRedirect(req: NextRequest): NextResponse | null {
-  const raw = process.env.AUTH_URL?.trim();
-  if (!raw || /localhost|127\.0\.0\.1/i.test(raw)) return null;
+  const host = req.nextUrl.host.toLowerCase();
+  if (/localhost|127\.0\.0\.1/i.test(host) || host.endsWith(".vercel.app")) {
+    return null;
+  }
   try {
-    const canonical = new URL(raw);
-    const host = req.nextUrl.host.toLowerCase();
+    const canonical = new URL(SITE_URL);
     const want = canonical.host.toLowerCase();
     if (!want || host === want) return null;
-    // Don't force custom domain onto preview/deployment URLs.
-    if (host.endsWith(".vercel.app")) return null;
+    if (!LEGACY_HOSTS.has(host) && host !== `www.${want}`) return null;
     const url = req.nextUrl.clone();
     url.protocol = canonical.protocol;
-    url.host = canonical.host;
+    url.host = want;
     return NextResponse.redirect(url, 308);
   } catch {
     return null;
@@ -86,5 +89,8 @@ export const config = {
     "/auth/desktop/:path*",
     "/login",
     "/signup",
+    "/forgot-password",
+    "/reset-password",
+    "/verify-email",
   ],
 };

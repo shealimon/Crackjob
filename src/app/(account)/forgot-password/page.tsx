@@ -1,6 +1,10 @@
+import { absoluteUrl } from "@/lib/seo";
 import { ForgotPasswordForm } from "./forgot-password-form";
 
-export const metadata = { title: "Forgot password" };
+export const metadata = {
+  title: "Forgot password",
+  alternates: { canonical: absoluteUrl("/forgot-password") },
+};
 
 export default function ForgotPasswordPage() {
   return (

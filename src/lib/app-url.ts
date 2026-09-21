@@ -4,6 +4,16 @@ function isLocalHost(url: string) {
   return /localhost|127\.0\.0\.1/i.test(url);
 }
 
+function isLegacyHost(url: string) {
+  return /porpin\.com/i.test(url);
+}
+
+function isUsableOrigin(url: string) {
+  if (isLegacyHost(url)) return false;
+  if (isProductionRuntime() && isLocalHost(url)) return false;
+  return true;
+}
+
 function isProductionRuntime() {
   return process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 }
@@ -11,16 +21,16 @@ function isProductionRuntime() {
 /**
  * App origin for cookies, Auth.js, and Supabase email links.
  * - Development: AUTH_URL / localhost:43123
- * - Production (live): https://crackjob.co (never localhost)
+ * - Production (live): https://crackjob.co (never localhost / never porpin.com)
  */
 export function appBaseUrl() {
   const authUrl = process.env.AUTH_URL?.replace(/\/$/, "");
-  if (authUrl && !(isProductionRuntime() && isLocalHost(authUrl))) {
+  if (authUrl && isUsableOrigin(authUrl)) {
     return authUrl;
   }
 
   const publicUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (publicUrl && !(isProductionRuntime() && isLocalHost(publicUrl))) {
+  if (publicUrl && isUsableOrigin(publicUrl)) {
     return publicUrl;
   }
 
