@@ -16,7 +16,7 @@ export function Faq() {
         </h2>
         <p className="mt-4 text-center text-sm text-white/70">
           Couldn&apos;t find your answer?{" "}
-          <a href="mailto:hello@interviewpilot.app" className="text-accent hover:underline">
+          <a href="mailto:help@crackjob.co" className="text-accent hover:underline">
             Send us an email
           </a>
         </p>

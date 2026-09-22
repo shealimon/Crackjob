@@ -1,3 +1,7 @@
+import { noIndexMetadata } from "@/lib/seo";
+
+export const metadata = noIndexMetadata;
+
 export default function DesktopAuthPage() {
   return (
     <main className="grid-fade flex flex-1 items-center justify-center px-5 py-20">

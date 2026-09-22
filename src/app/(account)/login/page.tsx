@@ -3,14 +3,18 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AuthFormFallback } from "@/components/loading-button";
 import { clearStaleSession } from "@/lib/clear-session-login";
-import { absoluteUrl } from "@/lib/seo";
 import { prisma } from "@/lib/prisma";
+import { absoluteUrl, SEO_SHARE_IMAGE } from "@/lib/seo";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
   title: "Login",
-  description: "Sign in to Crackjob — your AI interview assistant account for coding rounds and live interviews.",
+  description: "Sign in to your Crackjob account to use the AI interview assistant.",
   alternates: { canonical: absoluteUrl("/login") },
+  openGraph: {
+    url: absoluteUrl("/login"),
+    images: [SEO_SHARE_IMAGE],
+  },
 };
 
 export default async function LoginPage() {

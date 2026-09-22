@@ -10,7 +10,19 @@ const REDIRECT_HOSTS = ["www.porpin.com", "porpin.com", "www.crackjob.co"];
 const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "razorpay", "pdf-parse", "pdfjs-dist"],
   async redirects() {
-    return REDIRECT_HOSTS.flatMap((host) => [
+    const helpToGuide = [
+      { source: "/help", destination: "/how-it-works/getting-started", permanent: true },
+      { source: "/help/:topic", destination: "/how-it-works/:topic", permanent: true },
+      {
+        source: "/how-it-works/live-interview",
+        destination: "/how-it-works/shortcuts",
+        permanent: true,
+      },
+    ] as const;
+
+    return [
+      ...helpToGuide,
+      ...REDIRECT_HOSTS.flatMap((host) => [
       {
         source: "/",
         has: [{ type: "host" as const, value: host }],
@@ -23,7 +35,8 @@ const nextConfig: NextConfig = {
         destination: `${CANONICAL_ORIGIN}/:path*`,
         permanent: true,
       },
-    ]);
+    ]),
+    ];
   },
   turbopack: {
     root: websiteRoot,

@@ -20,6 +20,15 @@ export function SettingsIcon({ className }: IconProps) {
   );
 }
 
+export function ProfileIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.7">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20v-1.2a5 5 0 0 1 10 0V20" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function UsageIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.7">

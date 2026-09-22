@@ -1,9 +1,8 @@
 export const NAV_LINKS = [
   { href: "/#proof", label: "Proof" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/#faq", label: "Help" },
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/#types", label: "Real Questions", badge: "NEW" },
+  { href: "/how-it-works/getting-started", label: "How it works" },
+  { href: "/questions", label: "Real Questions", badge: "NEW" },
 ] as const;
 
 export const COMPANY_LOGOS = [

@@ -1,14 +1,17 @@
 import { auth } from "@/auth";
 import { clearStaleSession } from "@/lib/clear-session-login";
-import { absoluteUrl } from "@/lib/seo";
 import { prisma } from "@/lib/prisma";
+import { absoluteUrl, SEO_SHARE_IMAGE } from "@/lib/seo";
 import { SignupForm } from "./signup-form";
 
 export const metadata = {
   title: "Sign up",
-  description:
-    "Create a Crackjob account — AI interview application for DSA, system design, and live coding interviews.",
+  description: "Create a Crackjob account to use the AI interview assistant for live interviews.",
   alternates: { canonical: absoluteUrl("/signup") },
+  openGraph: {
+    url: absoluteUrl("/signup"),
+    images: [SEO_SHARE_IMAGE],
+  },
 };
 
 export default async function SignupPage() {

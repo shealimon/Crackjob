@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { noIndexMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Verify email" };
+export const metadata = {
+  ...noIndexMetadata,
+  title: "Verify email",
+};
 
 export default function VerifyEmailPage() {
   return (

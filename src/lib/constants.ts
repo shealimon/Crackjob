@@ -1,5 +1,7 @@
 export const PRODUCT_NAME = "Crackjob";
 export const PRODUCT_SHORT = "Crackjob";
+/** Windows overlay you install — distinct from the website. */
+export const DESKTOP_APPLICATION_LABEL = `${PRODUCT_NAME} Desktop Application`;
 export const DESKTOP_LINK_TTL_MS = 10 * 60 * 1000;
 
 /** Windows MSI served from `website/public/downloads/`. */

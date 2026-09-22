@@ -4,11 +4,10 @@ import { DashboardDataProvider } from "@/components/dashboard/dashboard-data";
 import { DashboardFrame } from "@/components/dashboard/dashboard-frame";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { clearSessionToLogin } from "@/lib/clear-session-login";
+import { noIndexMetadata } from "@/lib/seo";
 
 /** Private account area — keep out of Google index. */
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+export const metadata: Metadata = noIndexMetadata;
 
 /**
  * Fast open: JWT check only (no Prisma shell). Client shows loading, then /api/me.

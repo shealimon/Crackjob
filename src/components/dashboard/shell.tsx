@@ -9,20 +9,19 @@ import {
   BillingIcon,
   CloseIcon,
   DownloadIcon,
-  HelpIcon,
   LogoutIcon,
   MenuIcon,
   MoreIcon,
   OverviewIcon,
+  ProfileIcon,
   QuestionsIcon,
-  SettingsIcon,
   UsageIcon,
 } from "@/components/dashboard/icons";
 import { useDashboardNav } from "@/components/dashboard/nav";
 
 const NAV_PRIMARY = [
   { href: "/dashboard", label: "Overview", icon: OverviewIcon, exact: true },
-  { href: "/dashboard/settings", label: "Profile", icon: SettingsIcon },
+  { href: "/dashboard/settings", label: "Profile", icon: ProfileIcon },
   { href: "/dashboard/questions", label: "Questions", icon: QuestionsIcon },
 ] as const;
 
@@ -154,14 +153,6 @@ export function DashboardShell({
               <DownloadIcon className="size-4" />
               Download Windows app
             </AppDownloadLink>
-            <Link
-              href="/#faq"
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-black/70 hover:bg-black/[0.04] hover:text-black"
-              onClick={() => setMenuOpen(false)}
-            >
-              <HelpIcon className="size-4" />
-              Help
-            </Link>
             <button
               type="button"
               className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-black/70 hover:bg-black/[0.04] hover:text-black"

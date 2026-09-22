@@ -1,33 +1,40 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/seo";
+import { HELP_TOPIC_IDS } from "@/lib/help-content";
+import { absoluteUrl } from "@/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  const helpPages = HELP_TOPIC_IDS.map((topic) => ({
+    url: absoluteUrl(`/how-it-works/${topic}`),
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
 
   return [
     {
-      url: SITE_URL,
-      lastModified: now,
+      url: absoluteUrl("/"),
+      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: `${SITE_URL}/download`,
-      lastModified: now,
+      url: absoluteUrl("/download"),
+      lastModified: new Date(),
       changeFrequency: "weekly",
-      priority: 0.9,
+      priority: 0.8,
     },
+    ...helpPages,
     {
-      url: `${SITE_URL}/login`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${SITE_URL}/signup`,
-      lastModified: now,
+      url: absoluteUrl("/signup"),
+      lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.6,
+    },
+    {
+      url: absoluteUrl("/login"),
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
     },
   ];
 }

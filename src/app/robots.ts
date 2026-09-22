@@ -9,7 +9,10 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
         disallow: [
           "/api/",
-          "/dashboard/",
+          "/dashboard",
+          "/settings",
+          "/profile",
+          "/admin",
           "/auth/",
           "/verify-email",
           "/reset-password",

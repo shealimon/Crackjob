@@ -47,7 +47,7 @@ export default function OpenGraphImage() {
               maxWidth: 900,
             }}
           >
-            AI Interview Assistant for live coding rounds
+            AI Interview Assistant for live interviews
           </div>
           <div
             style={{
@@ -57,7 +57,7 @@ export default function OpenGraphImage() {
               maxWidth: 820,
             }}
           >
-            Real-time answers · Invisible on Zoom, Meet & Teams · Built like ChatGPT for interviews
+            Real-time help for coding interviews, DSA, SQL, and system design
           </div>
         </div>
 
