@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Doto, Geist_Mono, Instrument_Serif, Outfit, Space_Grotesk } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { defaultMetadata } from "@/lib/seo";
@@ -50,6 +52,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>{children}</Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

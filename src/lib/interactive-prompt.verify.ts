@@ -4,9 +4,11 @@
  */
 import { assembleSolveUserText, type SolveOptions } from "./ai";
 import {
+  buildCodeLanguageRule,
   buildInteractiveHandsOnPrompt,
   buildScreenshotStreamPrompt,
   buildStreamPrompt,
+  codeLanguageFenceTag,
   selectSolveSystemPrompt,
 } from "./prompts";
 
@@ -308,6 +310,19 @@ function base(partial: Partial<SolveOptions> = {}): SolveOptions {
   );
   assert(text.includes("priority 1"), "T10A: current instruction priority");
   assert(text.includes("INTERACTIVE CONTINUITY CONTEXT"), "T10A: TaskSession continuity");
+}
+
+// --- Code language follows Settings for any language, not LeetCode UI ---
+{
+  assert(codeLanguageFenceTag("C++") === "cpp", "T11: C++ fence tag");
+  assert(codeLanguageFenceTag("Java") === "java", "T11: Java fence tag");
+  const cppRule = buildCodeLanguageRule("C++", { screenshot: true });
+  assert(cppRule.includes("in C++"), "T11: C++ rule uses setting");
+  assert(cppRule.includes("ignore it"), "T11: screenshot ignores site UI");
+  const javaUser = assembleSolveUserText(
+    base({ imageBase64: TINY_JPEG, codeLanguage: "Java" }),
+  );
+  assert(javaUser.includes("in Java"), "T11: screenshot user text carries Java setting");
 }
 
 console.log("interactive-prompt.verify: all checks passed");

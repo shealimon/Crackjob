@@ -18,7 +18,7 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 const config: StreamModelConfig = {
-  model: "gpt-5.6-luna",
+  model: "gpt-6-luna",
   fastModel: "gpt-4.1-mini",
   nanoModel: "gpt-4.1-nano",
 };
@@ -36,7 +36,7 @@ const config: StreamModelConfig = {
 {
   assert(isQualitySolvePath({ source: "screenshot", imageBase64: "abc" }), "T2: screenshot quality");
   assert(
-    pickStreamModel({ source: "screenshot", imageBase64: "abc" }, config) === "gpt-5.6-luna",
+    pickStreamModel({ source: "screenshot", imageBase64: "abc" }, config) === "gpt-6-luna",
     "T2: screenshot uses luna",
   );
 }
@@ -49,7 +49,7 @@ const config: StreamModelConfig = {
     imageBase64: "abc",
   };
   assert(isQualitySolvePath(fused), "T3: voice+shot quality");
-  assert(pickStreamModel(fused, config) === "gpt-5.6-luna", "T3: voice+shot uses luna");
+  assert(pickStreamModel(fused, config) === "gpt-6-luna", "T3: voice+shot uses luna");
   assert(!isTrivialVoiceFollowUp(fused), "T3: screenshot never nano");
 }
 
@@ -57,7 +57,7 @@ const config: StreamModelConfig = {
 {
   assert(isQualitySolvePath({ source: "text", questionText: "Design a rate limiter" }), "T4: text quality");
   assert(
-    pickStreamModel({ source: "text", questionText: "Design a rate limiter" }, config) === "gpt-5.6-luna",
+    pickStreamModel({ source: "text", questionText: "Design a rate limiter" }, config) === "gpt-6-luna",
     "T4: text uses luna",
   );
 }
@@ -66,7 +66,7 @@ const config: StreamModelConfig = {
 {
   assert(isQualitySolvePath({ questionText: "Explain CAP theorem" }), "T5: omitted source + text");
   assert(
-    pickStreamModel({ questionText: "Explain CAP theorem" }, config) === "gpt-5.6-luna",
+    pickStreamModel({ questionText: "Explain CAP theorem" }, config) === "gpt-6-luna",
     "T5: omitted source uses luna",
   );
 }

@@ -62,7 +62,7 @@ export function pickStreamModel(
   options: SolveRoutingInput,
   config: StreamModelConfig,
 ): string {
-  // Spoken audio (no screenshot): previous nano TTFT path. Mini/luna made Ctrl+Enter 7–10s.
+  // Spoken audio (no screenshot): nano TTFT path. Luna made Ctrl+Enter 5–7s first hit.
   if (options.source === "voice" && !options.imageBase64) {
     return config.nanoModel || config.fastModel;
   }

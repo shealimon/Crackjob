@@ -15,6 +15,47 @@ export type SolveResult = {
   pitfalls: string[];
 };
 
+/** Markdown fence tag for the overlay highlighter (matches Settings labels). */
+export function codeLanguageFenceTag(codeLanguage?: string): string {
+  const lang = codeLanguage?.trim() || "Python";
+  const key = lang.toLowerCase();
+  const tags: Record<string, string> = {
+    python: "python",
+    javascript: "javascript",
+    typescript: "typescript",
+    java: "java",
+    php: "php",
+    golang: "go",
+    r: "r",
+    ruby: "ruby",
+    c: "c",
+    "c++": "cpp",
+    "c#": "csharp",
+    rust: "rust",
+    kotlin: "kotlin",
+    swift: "swift",
+    dart: "dart",
+    sql: "sql",
+  };
+  return tags[key] ?? key.replace(/\s+/g, "").replace(/#/g, "sharp").replace(/\+\+/g, "pp");
+}
+
+/**
+ * Settings → Code Language is the single source of truth for generated code
+ * (Python, Java, C++, JavaScript, etc.). On screenshots, ignore the coding site's UI language.
+ */
+export function buildCodeLanguageRule(
+  codeLanguage?: string,
+  options?: { screenshot?: boolean },
+) {
+  const lang = codeLanguage?.trim() || "Python";
+  const fence = codeLanguageFenceTag(lang);
+  const siteUi = options?.screenshot
+    ? " If the page shows a different language (LeetCode/HackerRank dropdown, starter template, or editor syntax), ignore it — it does not override this setting."
+    : "";
+  return `CODE LANGUAGE (mandatory): Implement every coding answer in ${lang}, from the candidate's app Settings → Code Language.${siteUi} Do not default to Python or mirror the on-screen editor unless ${lang} is the setting. Use another language only if the interviewer explicitly asks for it in speech or text. Put runnable solution code in a fenced block tagged \`${fence}\`.`;
+}
+
 /** Pull hard anchors from resume so the model cannot guess years or employers. */
 function extractResumeAnchors(resumeText: string) {
   const summary = analyzeResumeExperience(resumeText);
@@ -58,12 +99,12 @@ export function buildInteractiveHandsOnPrompt(options?: {
   outputLanguage?: string;
   liveExperienceYears?: number;
 }) {
-  const codeLanguage = options?.codeLanguage?.trim() || "Python";
   const outputLanguage = options?.outputLanguage?.trim() || "English";
   const langNote =
     outputLanguage.toLowerCase() === "english"
       ? ""
       : ` Speak the spoken parts in ${outputLanguage}.`;
+  const codeNote = buildCodeLanguageRule(options?.codeLanguage, { screenshot: true });
   const pack = options?.companyPack?.trim() || "";
   const companyNote = pack ? `\nCompany context (use lightly when relevant): ${pack}.` : "";
   const experienceYears =
@@ -156,7 +197,7 @@ CANDIDATE-FACING OUTPUT:
 - Ground every concrete claim in current evidence or provided context. Prefer "I'd…" action language when the candidate must DO something, without sounding like a rigid instruction manual.
 - Optional first line when helpful: Q: <≤15 word label of the current ask> — then the candidate response. Never use placeholders like "On-screen question".
 
-Write code/commands in ${codeLanguage} unless the screen or ask clearly requires another language.${langNote}${companyNote}
+${codeNote}${langNote}${companyNote}
 
 Return ONLY the candidate response.`;
 }
@@ -212,12 +253,12 @@ export function buildScreenshotStreamPrompt(options?: {
   mode?: InterviewModeId;
   liveExperienceYears?: number;
 }) {
-  const codeLanguage = options?.codeLanguage?.trim() || "Python";
   const outputLanguage = options?.outputLanguage?.trim() || "English";
   const langNote =
     outputLanguage.toLowerCase() === "english"
       ? ""
       : ` Speak the spoken parts in ${outputLanguage}.`;
+  const codeNote = buildCodeLanguageRule(options?.codeLanguage, { screenshot: true });
   const pack = options?.companyPack?.trim() || "";
   const companyStyle =
     pack &&
@@ -261,7 +302,7 @@ Practitioner shapes (examples only — NOT a routing table; include only what th
 - SQL / data: correct query or pipeline sketch when the ask is SQL/data-shaped.
 - Other domains: strong practitioner voice for that field — never force DSA templates onto non-coding asks.
 
-Write code in ${codeLanguage} unless the screen clearly requires another language.${langNote}${companyNote}${modeHint}
+${codeNote}${langNote}${companyNote}${modeHint}
 
 Return ONLY the candidate response.`;
 }
@@ -276,12 +317,11 @@ function buildSmartStreamPrompt(options?: {
   liveExperienceYears?: number;
 }) {
   const outputLanguage = options?.outputLanguage?.trim() || "English";
-  const codeLanguage = options?.codeLanguage?.trim() || "Python";
   const langNote =
     outputLanguage.toLowerCase() === "english"
       ? ""
       : ` Speak the spoken parts in ${outputLanguage}.`;
-  const codeNote = `Write code in ${codeLanguage} unless the question or screen clearly requires another language.`;
+  const codeNote = buildCodeLanguageRule(options?.codeLanguage);
   const pack = options?.companyPack?.trim() || "";
   const companyStyle =
     pack &&

@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { InterviewModeId } from "@/lib/constants";
 import { prepareVisionImage } from "@/lib/image";
 import {
+  buildCodeLanguageRule,
   formatResumeContext,
   normalizeExtractedQuestion,
   questionNeedsResume,
@@ -90,7 +91,7 @@ export function getAiConfig(): AiConfig {
   return {
     configured: Boolean(apiKey),
     demoMode,
-    model: process.env.OPENAI_MODEL || "gpt-5.6-luna",
+    model: process.env.OPENAI_MODEL || "gpt-6-luna",
     // Voice-only speed path — mini, not nano. Override via OPENAI_FAST_MODEL.
     fastModel: process.env.OPENAI_FAST_MODEL || "gpt-4.1-mini",
     nanoModel: process.env.OPENAI_NANO_MODEL || "gpt-4.1-nano",
@@ -137,9 +138,9 @@ function getVisionMaxTokens() {
   return Math.max(Math.floor(parsed), 200);
 }
 
-/** GPT-5.x rejects `max_tokens`; use `max_completion_tokens` instead. */
+/** GPT-5+/6 Luna rejects `max_tokens`; use `max_completion_tokens` instead. */
 function isGpt5Family(model: string) {
-  return /^gpt-5/i.test(model.trim());
+  return /^gpt-[56]/i.test(model.trim());
 }
 
 function completionOutputParams(model: string, maxTokens: number) {
@@ -150,7 +151,7 @@ function completionOutputParams(model: string, maxTokens: number) {
 }
 
 /**
- * GPT-5.x only accepts the default temperature (1). Sending 0 / 0.2 → 400:
+ * GPT-5+/6 Luna only accepts the default temperature (1). Sending 0 / 0.2 → 400:
  * "temperature does not support X with this model, only the default (1)".
  */
 function temperatureParams(model: string, temperature: number) {
@@ -223,6 +224,10 @@ function liveExperienceYears(options: SolveOptions): number | undefined {
   return typeof years === "number" && Number.isFinite(years) ? years : undefined;
 }
 
+function pushPreferredCodeLanguageBlock(parts: string[], options: SolveOptions, screenshot: boolean) {
+  parts.push(buildCodeLanguageRule(options.codeLanguage, { screenshot }));
+}
+
 function pushLiveExperienceBlock(parts: string[], options: SolveOptions) {
   const block = options.liveExperience
     ? buildLiveExperienceUserBlock(options.liveExperience)
@@ -283,6 +288,7 @@ function assembleInteractiveSolveUserText(
   }
 
   pushLiveExperienceBlock(parts, options);
+  pushPreferredCodeLanguageBlock(parts, options, hasImage);
 
   // Priority 2 — current screen (image bytes attached separately)
   if (hasImage) {
@@ -339,6 +345,7 @@ export function assembleSolveUserText(options: SolveOptions): string {
   }
 
   pushLiveExperienceBlock(parts, options);
+  pushPreferredCodeLanguageBlock(parts, options, true);
 
   if (question) {
     parts.push(`INTERVIEWER / CANDIDATE INSTRUCTION:\n${question}`);
@@ -503,6 +510,7 @@ FOLLOW-UP RULES for the new question below:
   }
 
   pushLiveExperienceBlock(parts, options);
+  pushPreferredCodeLanguageBlock(parts, options, false);
 
   pushDocumentBlock(parts, options);
   pushTaskContextBlock(parts, options);
