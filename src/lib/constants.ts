@@ -5,7 +5,7 @@ export const DESKTOP_APPLICATION_LABEL = `${PRODUCT_NAME} Desktop Application`;
 export const DESKTOP_LINK_TTL_MS = 10 * 60 * 1000;
 
 /** Windows MSI served from `website/public/downloads/`. */
-export const WINDOWS_APP_DOWNLOAD_FILENAME = "CrackJobSetup-x64-0.1.7.msi";
+export const WINDOWS_APP_DOWNLOAD_FILENAME = "CrackJobSetup-x64-0.1.8.msi";
 export const WINDOWS_APP_DOWNLOAD_URL = `/downloads/${WINDOWS_APP_DOWNLOAD_FILENAME}`;
 
 export const INTERVIEW_MODES = [
