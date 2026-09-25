@@ -1,11 +1,23 @@
 import { z } from "zod";
 import { requireUser } from "@/lib/api-auth";
 import { json, optionsCors } from "@/lib/http";
+import {
+  estimateBase64DecodedBytes,
+  MAX_AUDIO_BYTES,
+} from "@/lib/request-limits";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { mapOpenAiError } from "@/lib/openai-errors";
 import { transcribeWavBuffer, transcribeWavBase64, transcribeWavBufferStreaming } from "@/lib/transcribe";
 
 const jsonSchema = z.object({
-  audioBase64: z.string().min(100),
+  audioBase64: z
+    .string()
+    .min(100)
+    .max(18_000_000)
+    .refine(
+      (value) => estimateBase64DecodedBytes(value) <= MAX_AUDIO_BYTES,
+      { message: "Audio is too large" },
+    ),
   language: z.string().max(40).optional(),
   stream: z.boolean().optional(),
 });
@@ -22,6 +34,14 @@ export async function POST(request: Request) {
   const authed = await requireUser(request);
   if ("error" in authed) {
     return json({ error: authed.error }, { status: authed.status });
+  }
+
+  const limited = checkRateLimit(`ai:transcribe:${authed.userId}`, {
+    limit: 120,
+    windowMs: 60 * 1000,
+  });
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterSec);
   }
 
   const t0 = Date.now();
@@ -43,6 +63,9 @@ export async function POST(request: Request) {
       if (!(file instanceof Blob) || file.size < 1000) {
         return json({ error: "Send audio file (WAV)" }, { status: 400 });
       }
+      if (file.size > MAX_AUDIO_BYTES) {
+        return json({ error: "Audio file is too large" }, { status: 413 });
+      }
       buffer = Buffer.from(await file.arrayBuffer());
     } else {
       const body = jsonSchema.safeParse(await request.json().catch(() => null));
@@ -53,6 +76,10 @@ export async function POST(request: Request) {
       language = body.data.language;
       wantStream = Boolean(body.data.stream);
       buffer = Buffer.from(audioBase64, "base64");
+    }
+
+    if (buffer && buffer.length > MAX_AUDIO_BYTES) {
+      return json({ error: "Audio file is too large" }, { status: 413 });
     }
 
     if (wantStream) {

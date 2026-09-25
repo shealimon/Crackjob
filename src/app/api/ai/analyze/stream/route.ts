@@ -5,6 +5,7 @@ import { applyFreeAnswerGate, type FreeAnswerTier } from "@/lib/explore-answer";
 import { streamSolve, tokensToCredits, type StreamSolveEvent } from "@/lib/ai";
 import { recordAiUsage } from "@/lib/credits";
 import { json, ndjsonStream, optionsCors } from "@/lib/http";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { resolveLiveInterviewExperience } from "@/lib/live-experience";
 import { resolveExtraContext } from "@/lib/resume-context";
 
@@ -18,6 +19,14 @@ export async function POST(request: Request) {
   const authed = await requireUser(request);
   if ("error" in authed) {
     return json({ error: authed.error }, { status: authed.status });
+  }
+
+  const limited = checkRateLimit(`ai:analyze:${authed.userId}`, {
+    limit: 90,
+    windowMs: 60 * 1000,
+  });
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterSec);
   }
 
   const body = schema.safeParse(await request.json().catch(() => null));

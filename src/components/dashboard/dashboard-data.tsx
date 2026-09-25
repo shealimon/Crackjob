@@ -6,10 +6,20 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { signOut } from "next-auth/react";
+import { useDashboardNav } from "@/components/dashboard/nav";
 import type { DashboardPayload } from "@/lib/dashboard-data";
+import {
+  includesSatisfied,
+  includesToSet,
+  meIncludesForDashboardPath,
+  meQueryFromIncludes,
+  type MeInclude,
+  ME_INCLUDE_ALL,
+} from "@/lib/me-includes";
 import { planLabel } from "@/lib/plans";
 import { toPublicProfile } from "@/lib/profile";
 
@@ -48,6 +58,29 @@ function asPayload(body: Record<string, unknown>): DashboardPayload {
   };
 }
 
+function mergeMePayload(
+  prev: DashboardPayload | null,
+  body: Record<string, unknown>,
+): DashboardPayload {
+  const next = asPayload(body);
+  if (!prev) return next;
+  const includes = (body.includes as MeInclude[] | undefined) ?? ME_INCLUDE_ALL;
+  const inc = new Set(includes);
+  return {
+    user: next.user,
+    profile: inc.has("shell") ? next.profile : prev.profile,
+    desktopSession: inc.has("shell") ? next.desktopSession : prev.desktopSession,
+    usageByDay: inc.has("usage") ? next.usageByDay : prev.usageByDay,
+    usageEvents: inc.has("events") ? next.usageEvents : prev.usageEvents,
+    payments: inc.has("payments") ? next.payments : prev.payments,
+  };
+}
+
+async function fetchMe(url: string) {
+  const res = await fetch(url, { cache: "no-store" });
+  return res;
+}
+
 export function DashboardDataProvider({
   children,
   initial,
@@ -55,22 +88,33 @@ export function DashboardDataProvider({
   children: React.ReactNode;
   initial: DashboardPayload | null;
 }) {
+  const { path } = useDashboardNav();
   const [data, setData] = useState<DashboardPayload | null>(initial);
   const [loading, setLoading] = useState(!initial);
+  const loadedIncludes = useRef<Set<MeInclude> | "all">(
+    initial ? "all" : includesToSet("all"),
+  );
 
-  const refresh = useCallback(async () => {
-    const res = await fetch("/api/me", { cache: "no-store" });
+  const fetchIncludes = useCallback(async (includes: MeInclude[] | "all") => {
+    const res = await fetchMe(meQueryFromIncludes(includes));
     if (res.status === 401) {
       await signOut({ callbackUrl: "/login" });
       return;
     }
     if (!res.ok) return;
     const body = (await res.json()) as Record<string, unknown>;
-    setData(asPayload(body));
+    setData((prev) => mergeMePayload(prev, body));
+    const returned = body.includes as MeInclude[] | undefined;
+    loadedIncludes.current = returned
+      ? includesToSet(returned)
+      : includesToSet(includes);
   }, []);
 
+  const refresh = useCallback(async () => {
+    await fetchIncludes("all");
+  }, [fetchIncludes]);
+
   useEffect(() => {
-    // Prefer client /api/me after a fast JWT-only layout — show panel loading meanwhile.
     if (initial) {
       setLoading(false);
       return;
@@ -79,7 +123,8 @@ export function DashboardDataProvider({
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/me", { cache: "no-store" });
+        const includes = meIncludesForDashboardPath(path);
+        const res = await fetchMe(meQueryFromIncludes(includes));
         if (cancelled) return;
         if (res.status === 401) {
           await signOut({ callbackUrl: "/login" });
@@ -87,7 +132,13 @@ export function DashboardDataProvider({
         }
         if (!res.ok) return;
         const body = (await res.json()) as Record<string, unknown>;
-        if (!cancelled) setData(asPayload(body));
+        if (!cancelled) {
+          setData((prev) => mergeMePayload(prev, body));
+          const returned = body.includes as MeInclude[] | undefined;
+          loadedIncludes.current = returned
+            ? includesToSet(returned)
+            : includesToSet(includes);
+        }
       } catch {
         // Keep null — DashboardView shows error after loading ends.
       } finally {
@@ -97,7 +148,15 @@ export function DashboardDataProvider({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount fetch uses first path only
   }, [initial]);
+
+  useEffect(() => {
+    if (loading || initial) return;
+    const needed = meIncludesForDashboardPath(path);
+    if (includesSatisfied(loadedIncludes.current, needed)) return;
+    void fetchIncludes(needed);
+  }, [fetchIncludes, initial, loading, path]);
 
   const value = useMemo(
     () => ({ data, loading, refresh }),

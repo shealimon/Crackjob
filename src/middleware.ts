@@ -54,21 +54,18 @@ export async function middleware(req: NextRequest) {
   if (canonical) return canonical;
 
   const { pathname, search } = req.nextUrl;
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
   const isProtected =
     pathname.startsWith("/dashboard") || pathname.startsWith("/auth/desktop");
 
-  // Marketing + API routes don't need a JWT decode on every request.
-  if (!isAuthPage && !isProtected) {
+  // Login/signup stay in the matcher so legacy hosts still redirect, but the
+  // JWT is unused there. Decoding it only delays the form. Those pages check
+  // the cookie themselves and hit the DB only when a session is present.
+  if (!isProtected) {
     return NextResponse.next();
   }
 
   const token = await readSessionToken(req);
   const isLoggedIn = Boolean(token);
-
-  // Do NOT auto-skip /login|/signup based on JWT alone — the cookie can outlive
-  // a deleted DB user. Login/signup pages verify the user still exists, then
-  // either go to dashboard or clear the stale session and stay on the form.
 
   if (!isLoggedIn && isProtected) {
     const login = new URL("/login", req.nextUrl.origin);

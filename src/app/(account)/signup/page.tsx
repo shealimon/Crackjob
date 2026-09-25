@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { clearStaleSession } from "@/lib/clear-session-login";
+import { hasSessionCookie } from "@/lib/has-session-cookie";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl, SEO_SHARE_IMAGE } from "@/lib/seo";
 import { SignupForm } from "./signup-form";
@@ -15,16 +16,19 @@ export const metadata = {
 };
 
 export default async function SignupPage() {
-  const session = await auth();
-  const userId = session?.user?.id?.trim();
-  if (userId) {
-    const exists = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-    // Always show signup — only clear a stale cookie if DB user was deleted.
-    if (!exists) {
-      await clearStaleSession();
+  // No cookie: send the form immediately. Only a real session cookie is checked.
+  if (await hasSessionCookie()) {
+    const session = await auth();
+    const userId = session?.user?.id?.trim();
+    if (userId) {
+      const exists = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      // Always show signup — only clear a stale cookie if DB user was deleted.
+      if (!exists) {
+        await clearStaleSession();
+      }
     }
   }
 

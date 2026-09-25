@@ -1,7 +1,6 @@
 "use client";
 
 import { useDashboardData } from "@/components/dashboard/dashboard-data";
-import { DashboardNavProvider } from "@/components/dashboard/nav";
 import { DashboardShell } from "@/components/dashboard/shell";
 
 export type DashboardBootstrapUser = {
@@ -32,9 +31,5 @@ export function DashboardFrame({
         fullAccess: false,
       };
 
-  return (
-    <DashboardNavProvider>
-      <DashboardShell user={user}>{children}</DashboardShell>
-    </DashboardNavProvider>
-  );
+  return <DashboardShell user={user}>{children}</DashboardShell>;
 }

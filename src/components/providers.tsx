@@ -19,11 +19,18 @@ function needsAuthSession(pathname: string) {
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const withSession = needsAuthSession(pathname);
+  // Login/signup forms don't read the client session. Passing null skips the
+  // /api/auth/session request that otherwise races the first paint.
+  const knownSignedOut = pathname === "/login" || pathname === "/signup";
 
   return (
     <ToastProvider>
       {withSession ? (
-        <SessionProvider refetchOnWindowFocus={false} refetchInterval={0}>
+        <SessionProvider
+          session={knownSignedOut ? null : undefined}
+          refetchOnWindowFocus={false}
+          refetchInterval={0}
+        >
           {children}
         </SessionProvider>
       ) : (

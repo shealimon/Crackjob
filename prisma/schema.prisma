@@ -115,6 +115,7 @@ model AiUsage {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, accessLevel])
 }
 
 /// One row per user per calendar day — `question` holds the full local day JSON.

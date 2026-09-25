@@ -2,6 +2,7 @@ import { z } from "zod";
 import { loginSchema } from "@/lib/auth-credentials";
 import { createDesktopSession, userPublicPayload } from "@/lib/desktop-session";
 import { json, optionsCors } from "@/lib/http";
+import { checkRateLimit, clientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 
@@ -15,6 +16,15 @@ export function OPTIONS() {
 }
 
 export async function POST(request: Request) {
+  const ip = clientIp(request);
+  const limited = checkRateLimit(`auth:desktop-login:${ip}`, {
+    limit: 30,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterSec);
+  }
+
   const body = schema.safeParse(await request.json().catch(() => null));
   if (!body.success) {
     return json({ error: "Enter a valid email and password" }, { status: 400 });

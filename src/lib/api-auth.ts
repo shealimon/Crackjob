@@ -12,7 +12,10 @@ export type AuthedUser = {
 const DEV_EMAIL = "dev@localhost";
 
 export function isAuthSkipped() {
-  return process.env.SKIP_AUTH === "true";
+  if (process.env.SKIP_AUTH !== "true") return false;
+  if (process.env.VERCEL === "1") return false;
+  if (process.env.NODE_ENV === "production") return false;
+  return true;
 }
 
 async function ensureDevUserId() {

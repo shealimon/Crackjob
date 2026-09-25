@@ -19,6 +19,8 @@ export function HelpArticle({ topic }: { topic: HelpTopicContent }) {
       </header>
 
       <div className={hiw.card}>
+        {topic.cardTitle ? <h2 className={hiw.cardTitle}>{topic.cardTitle}</h2> : null}
+
         {topic.shortcuts?.length ? <HelpShortcuts shortcuts={topic.shortcuts} /> : null}
 
         {topic.paragraphs?.length ? (

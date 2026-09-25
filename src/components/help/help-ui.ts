@@ -3,6 +3,7 @@ export const hiw = {
   pageTitle: "text-2xl font-semibold tracking-tight text-black sm:text-3xl",
   pageSubtitle: "mt-2 max-w-2xl text-sm leading-6 text-black/55",
   card: "rounded-2xl border border-black/10 bg-white p-5 sm:p-6",
+  cardTitle: "mb-4 text-base font-semibold text-black",
   body: "text-sm leading-6 text-black/55",
   bodyStrong: "text-sm font-semibold text-black",
   link: "font-medium text-black/55 underline decoration-black/20 underline-offset-2 hover:text-black hover:decoration-black/40",

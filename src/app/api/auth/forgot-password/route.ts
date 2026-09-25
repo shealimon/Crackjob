@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authEmailCallbackUrl } from "@/lib/app-url";
+import { checkRateLimit, clientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 
 const schema = z.object({
@@ -8,6 +9,15 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  const limited = checkRateLimit(`auth:forgot:${ip}`, {
+    limit: 15,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterSec);
+  }
+
   const body = schema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
     return NextResponse.json({ error: "Enter a valid email" }, { status: 400 });

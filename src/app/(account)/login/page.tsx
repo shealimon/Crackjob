@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AuthFormFallback } from "@/components/loading-button";
 import { clearStaleSession } from "@/lib/clear-session-login";
+import { hasSessionCookie } from "@/lib/has-session-cookie";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl, SEO_SHARE_IMAGE } from "@/lib/seo";
 import { LoginForm } from "./login-form";
@@ -18,18 +19,21 @@ export const metadata = {
 };
 
 export default async function LoginPage() {
-  const session = await auth();
-  const userId = session?.user?.id?.trim();
-  if (userId) {
-    const exists = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    });
-    if (exists) {
-      redirect("/dashboard");
+  // No cookie: send the form immediately. JWT + DB only when a session exists.
+  if (await hasSessionCookie()) {
+    const session = await auth();
+    const userId = session?.user?.id?.trim();
+    if (userId) {
+      const exists = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+      if (exists) {
+        redirect("/dashboard");
+      }
+      // Deleted/missing user — clear stale JWT and show login (no error).
+      await clearStaleSession();
     }
-    // Deleted/missing user — clear stale JWT and show login (no error).
-    await clearStaleSession();
   }
 
   return (

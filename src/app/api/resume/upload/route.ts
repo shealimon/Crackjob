@@ -6,6 +6,7 @@ import {
   isSupportedResumeFilename,
   parseResumeFile,
 } from "@/lib/resume-parse";
+import { MAX_RESUME_BYTES } from "@/lib/request-limits";
 import {
   removeResumeObject,
   uploadResumeObject,
@@ -40,6 +41,10 @@ export async function POST(request: Request) {
       },
       { status: 400 },
     );
+  }
+
+  if (entry.size > MAX_RESUME_BYTES) {
+    return json({ error: "Resume file is too large (max 8 MB)." }, { status: 413 });
   }
 
   try {

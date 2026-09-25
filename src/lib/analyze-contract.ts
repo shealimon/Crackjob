@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { MODE_IDS } from "@/lib/constants";
+import {
+  estimateBase64DecodedBytes,
+  MAX_IMAGE_BASE64_CHARS,
+} from "@/lib/request-limits";
 
 /** Soft budget for compact Interactive taskContext (not a full TaskSession dump). */
 export const ANALYZE_TASK_CONTEXT_MAX_CHARS = 8000;
@@ -13,7 +17,17 @@ export const analyzeStreamRequestSchema = z
   .object({
     mode: z.enum(MODE_IDS),
     questionText: z.string().max(8000).optional(),
-    imageBase64: z.string().min(20).optional(),
+    imageBase64: z
+      .string()
+      .min(20)
+      .max(MAX_IMAGE_BASE64_CHARS)
+      .optional()
+      .refine(
+        (value) =>
+          !value ||
+          estimateBase64DecodedBytes(value) <= 4 * 1024 * 1024,
+        { message: "Screenshot is too large" },
+      ),
     mimeType: z.string().max(40).optional(),
     companyPack: z.string().max(80).optional(),
     outputLanguage: z.string().max(40).optional(),

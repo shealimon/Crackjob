@@ -11,7 +11,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate",
-    "test:contracts": "npx --yes tsx src/lib/analyze-contract.verify.ts && npx --yes tsx src/lib/multimodal-fusion.verify.ts && npx --yes tsx src/lib/interactive-prompt.verify.ts && npx --yes tsx src/lib/live-experience.verify.ts && npx --yes tsx src/lib/interview-intelligence.verify.ts && npx --yes tsx src/lib/solve-routing.verify.ts"
+    "test:contracts": "npx --yes tsx src/lib/analyze-contract.verify.ts && npx --yes tsx src/lib/multimodal-fusion.verify.ts && npx --yes tsx src/lib/interactive-prompt.verify.ts && npx --yes tsx src/lib/live-experience.verify.ts && npx --yes tsx src/lib/interview-intelligence.verify.ts && npx --yes tsx src/lib/solve-routing.verify.ts && npx --yes tsx src/lib/me-includes.verify.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

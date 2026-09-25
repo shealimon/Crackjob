@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { auth } from "@/auth";
 import { DashboardDataProvider } from "@/components/dashboard/dashboard-data";
 import { DashboardFrame } from "@/components/dashboard/dashboard-frame";
+import { DashboardNavProvider } from "@/components/dashboard/nav";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import { clearSessionToLogin } from "@/lib/clear-session-login";
 import { noIndexMetadata } from "@/lib/seo";
@@ -30,14 +31,16 @@ export default async function DashboardLayout({
   };
 
   return (
-    <DashboardDataProvider initial={null}>
-      <DashboardFrame bootstrapUser={bootstrapUser}>
-        <DashboardView />
-      </DashboardFrame>
+    <DashboardNavProvider>
+      <DashboardDataProvider initial={null}>
+        <DashboardFrame bootstrapUser={bootstrapUser}>
+          <DashboardView />
+        </DashboardFrame>
       {/* Register App Router segments without blocking the shell UI. */}
       <div className="hidden" aria-hidden>
         {children}
       </div>
-    </DashboardDataProvider>
+      </DashboardDataProvider>
+    </DashboardNavProvider>
   );
 }

@@ -6,6 +6,7 @@ import {
   sessionTokenCookieOptions,
   useSecureAuthCookies,
 } from "@/lib/session-cookie";
+import { checkRateLimit, clientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { createSupabaseAnonClient } from "@/lib/supabase/anon";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 
@@ -13,6 +14,15 @@ const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days (Auth.js default)
 
 /** One-shot email/password login — avoids Auth.js CSRF + callback round-trips. */
 export async function POST(req: Request) {
+  const ip = clientIp(req);
+  const limited = checkRateLimit(`auth:login:${ip}`, {
+    limit: 30,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterSec);
+  }
+
   const body = loginSchema.safeParse(await req.json().catch(() => null));
   if (!body.success) {
     return NextResponse.json({ error: "Enter a valid email and password" }, { status: 400 });

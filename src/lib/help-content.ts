@@ -1,4 +1,4 @@
-import { PRODUCT_NAME } from "@/lib/constants";
+import { PRODUCT_NAME, WINDOWS_APP_DOWNLOAD_URL } from "@/lib/constants";
 
 export const HELP_SUPPORT_EMAIL = "help@crackjob.co";
 
@@ -105,29 +105,51 @@ export const HELP_TOPICS: Record<HelpTopicId, HelpTopicContent> = {
   "getting-started": {
     id: "getting-started",
     title: "Getting Started",
-    subtitle: "Desktop Application on Windows — same login as the website.",
+    subtitle: "Windows desktop app — same login as the website. Do this once before a real interview.",
+    cardTitle: "Quick Start Guide",
     steps: [
       {
-        title: "Download & install",
-        links: [{ href: "/download", label: "Download .msi" }],
+        title: "Download the Crackjob app",
+        body: "Download the Windows installer (.msi) from our website.",
+        links: [{ href: WINDOWS_APP_DOWNLOAD_URL, label: "Download .msi" }],
       },
       {
-        title: "Sign up on website → sign in on desktop",
+        title: "Install the application",
+        body: "Run the installer and finish setup. Crackjob opens from the Start menu.",
+      },
+      {
+        title: "Create an account",
+        body: "Sign up or log in on the website. The desktop app uses the same account.",
         links: [
           { href: "/signup", label: "Sign up" },
           { href: "/login", label: "Log in" },
         ],
       },
       {
-        title: "Test screen share once",
+        title: "Launch and sign in",
+        body: "Open Crackjob Desktop and sign in. You should see the toolbar, not only the login screen.",
+      },
+      {
+        title: "Perform basic checks",
+        body: "Share your entire screen on Meet, Zoom, or Teams. The other person should not see the toolbar or answers. You still see the overlay on your PC.",
         links: [{ href: howItWorksPath("basic-checks"), label: "Basic checks" }],
       },
       {
-        title: "Gear → languages and resume",
-        links: [{ href: howItWorksPath("settings"), label: "Settings" }],
+        title: "Subscribe to Crackjob",
+        body: "A few answers are free to try. Choose a plan on the pricing page for full answers through the interview.",
+        links: [{ href: "/#pricing", label: "Pricing page" }],
       },
       {
-        title: "On call: Start → Ctrl+H → Ctrl+Enter",
+        title: "Configure your preferences",
+        body: "Open the gear icon. Set output language, code language (Python, Java, JavaScript, and more), meeting audio language, and upload your resume. Resume can also be set from Profile on the dashboard.",
+        links: [
+          { href: howItWorksPath("settings"), label: "Settings" },
+          { href: "/dashboard/settings", label: "Profile" },
+        ],
+      },
+      {
+        title: "On the call",
+        body: "Spoken question: press Start, then Ctrl+Enter. Coding on screen: Ctrl+H, then Ctrl+Enter. Ctrl+B hides and shows the UI.",
         links: [{ href: howItWorksPath("shortcuts"), label: "All shortcuts" }],
       },
     ],
@@ -266,7 +288,7 @@ export const HELP_TOPICS: Record<HelpTopicId, HelpTopicContent> = {
       { title: "Ctrl + arrows — moved off screen" },
       {
         title: "Quit from gear → reopen",
-        links: [{ href: "/download", label: "Reinstall" }],
+        links: [{ href: WINDOWS_APP_DOWNLOAD_URL, label: "Reinstall" }],
       },
     ],
   },
@@ -282,7 +304,7 @@ export const HELP_TOPICS: Record<HelpTopicId, HelpTopicContent> = {
       },
       {
         title: "Update installer",
-        links: [{ href: "/download", label: "Download" }],
+        links: [{ href: WINDOWS_APP_DOWNLOAD_URL, label: "Download" }],
       },
     ],
     note: `Still wrong? ${HELP_SUPPORT_EMAIL}`,

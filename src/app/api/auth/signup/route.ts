@@ -3,12 +3,22 @@ import { signupSchema } from "@/lib/auth-credentials";
 import { authEmailCallbackUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/prisma";
 import { createSupabaseRouteClient } from "@/lib/supabase/route";
+import { checkRateLimit, clientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { syncPrismaUserFromSupabase } from "@/lib/supabase/sync-user";
 
 const EMAIL_EXISTS_MSG =
   "An account with this email already exists. Sign in instead.";
 
 export async function POST(req: NextRequest) {
+  const ip = clientIp(req);
+  const limited = checkRateLimit(`auth:signup:${ip}`, {
+    limit: 20,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return rateLimitResponse(limited.retryAfterSec);
+  }
+
   let body: unknown;
   try {
     body = await req.json();

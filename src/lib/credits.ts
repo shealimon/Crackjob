@@ -56,12 +56,6 @@ export async function dailyUsageByDay(
   const startKey = addIstDays(endKey, -(days - 1));
   const since = new Date(`${startKey}T00:00:00+05:30`);
 
-  const rows = await prisma.aiUsage.findMany({
-    where: { userId, error: null, createdAt: { gte: since } },
-    select: { creditsUsed: true, createdAt: true, accessLevel: true },
-    orderBy: { createdAt: "asc" },
-  });
-
   const map = new Map<
     string,
     { creditsUsed: number; solves: number; exploreSolves: number; fullSolves: number }
@@ -74,14 +68,36 @@ export async function dailyUsageByDay(
       fullSolves: 0,
     });
   }
-  for (const row of rows) {
-    const key = istDateKey(row.createdAt);
-    const bucket = map.get(key);
+
+  type AggRow = {
+    date: string;
+    credits_used: number;
+    solves: number;
+    explore_solves: number;
+    full_solves: number;
+  };
+
+  const aggregated = await prisma.$queryRaw<AggRow[]>`
+    SELECT
+      to_char(("createdAt" AT TIME ZONE 'Asia/Kolkata'), 'YYYY-MM-DD') AS date,
+      COALESCE(SUM("creditsUsed"), 0)::int AS credits_used,
+      COUNT(*)::int AS solves,
+      COALESCE(SUM(CASE WHEN "accessLevel" = 'explore' THEN 1 ELSE 0 END), 0)::int AS explore_solves,
+      COALESCE(SUM(CASE WHEN "accessLevel" <> 'explore' THEN 1 ELSE 0 END), 0)::int AS full_solves
+    FROM "AiUsage"
+    WHERE "userId" = ${userId}
+      AND "error" IS NULL
+      AND "createdAt" >= ${since}
+    GROUP BY 1
+  `;
+
+  for (const row of aggregated) {
+    const bucket = map.get(row.date);
     if (!bucket) continue;
-    bucket.creditsUsed += row.creditsUsed;
-    bucket.solves += 1;
-    if (row.accessLevel === "explore") bucket.exploreSolves += 1;
-    else bucket.fullSolves += 1;
+    bucket.creditsUsed += row.credits_used;
+    bucket.solves += row.solves;
+    bucket.exploreSolves += row.explore_solves;
+    bucket.fullSolves += row.full_solves;
   }
 
   return [...map.entries()].map(([date, value]) => ({ date, ...value }));
