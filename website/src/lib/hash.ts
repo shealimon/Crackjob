@@ -1,0 +1,9 @@
+import { createHash, randomBytes } from "crypto";
+
+export function sha256(value: string) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+export function newToken(bytes = 32) {
+  return randomBytes(bytes).toString("hex");
+}

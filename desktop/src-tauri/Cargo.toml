@@ -1,0 +1,45 @@
+[package]
+name = "desktop"
+version = "0.1.8"
+description = "Host Process for Crackjob Services"
+authors = ["CrackJob"]
+edition = "2021"
+
+[lib]
+name = "desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+uuid = { version = "1", features = ["v4"] }
+xcap = "0.5"
+image = "0.25"
+
+[target.'cfg(windows)'.dependencies]
+wasapi = "0.19"
+webview2-com = "0.38"
+tauri-plugin-single-instance = "2"
+windows = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Dwm",
+  "Win32_Graphics_Gdi",
+  "Win32_Media_Audio",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Registry",
+  "Win32_System_Threading",
+  "Win32_System_Variant",
+  "Win32_Security_Cryptography",
+  "Win32_UI_WindowsAndMessaging",
+] }
+windows-core = "0.61"

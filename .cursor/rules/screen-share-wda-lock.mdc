@@ -1,0 +1,54 @@
+---
+description: LOCKED — screen-share stealth (WDA + Ctrl+B cloak); do not regress
+globs: desktop/src-tauri/src/stealth.rs,desktop/src-tauri/src/lib.rs,desktop/src-tauri/tauri.conf.json
+alwaysApply: true
+---
+
+# LOCKED: Screen-share invisibility (WDA) + Ctrl+B cloak
+
+**Do not change this behavior.** User locked it after it was confirmed working (entire-screen share + Ctrl+B).
+
+## Product requirement
+
+- **User (local):** Crack UI stays visible during entire-screen share.
+- **Interviewer (share/Meet):** Crack must not appear (use `WDA_EXCLUDEFROMCAPTURE`).
+- **Do NOT** call `hide_window` / `window.hide()` when screen-share is detected.
+- Manual hide/show is **only** `Ctrl+B` (`toggle_app` → `hide_app` / `show_app`).
+
+## Required implementation (keep as-is)
+
+### Capture exclusion (`stealth.rs`)
+
+- Use `SetWindowDisplayAffinity(..., WDA_EXCLUDEFROMCAPTURE)`.
+- **Never** treat `WDA_MONITOR` as success — it paints a **black box** of the app shape in Meet.
+- If affinity is `WDA_MONITOR`, clear it and set `EXCLUDEFROMCAPTURE` only (`fix_monitor_affinity` / `restore_exclude_affinity`).
+- Opaque host windows (`tauri.conf.json`: `transparent: false`, solid `backgroundColor`).
+- WebView2 background must stay **opaque** (`A: 255`). Do **not** set `A: 0` — it breaks WDA.
+- `contentProtected: true` on main/overlay windows is required.
+- Capture exclusion stays ON unless `CRACK_ALLOW_CAPTURE=1`.
+
+### Ctrl+B hide/show (`hide_window` / `show_window`)
+
+- **Hide:** `DWMWA_CLOAK` (cloak) — **not** `window.hide()` / SW_HIDE.
+- **Show:** uncloak + restore `WDA_EXCLUDEFROMCAPTURE`.
+- SW_HIDE → SW_SHOW after WDA causes Meet to show a **black rectangle** the size of the app. Do not reintroduce SW_HIDE for Ctrl+B while exclusion is enabled.
+
+### Screen-share monitor (`sync_share_protect` in `lib.rs`)
+
+- On entire-screen share detect: **soft WDA reassert only** (`reassert_capture_exclusion`).
+- **No** local hide on share detect.
+- **No** clear-then-reapply affinity loops (creates capture gaps / flicker).
+- **No** style-strip / `SetWindowPos(SWP_FRAMECHANGED)` on every share tick (causes local UI flicker).
+
+## Forbidden (do not reintroduce)
+
+- Hiding main/overlay when `is_active_screen_share()` becomes true
+- `window.hide()` for Ctrl+B while capture exclusion is enabled
+- Accepting `WDA_MONITOR` as “protected”
+- Transparent window / `SetDefaultBackgroundColor` with `A: 0` for main/overlay
+- Clearing WDA every N ms during an active share
+- “Meet ignores WDA so always local-hide” fallbacks
+
+## Related locked rule
+
+- Ctrl+H must never hide the UI — see `ctrl-h-no-hide.mdc`.

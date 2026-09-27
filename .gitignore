@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+dist-ssr/
+.next/
+out/
+build/
+target/
+
+# Logs & debug
+*.log
+npm-debug.log*
+
+# OS & editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Rust / Tauri
+**/src-tauri/target/
+
+# Prisma / SQLite
+*.db
+*.db-journal
+/prisma/*.db
+
+# Vercel
+.vercel/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Cursor local
+.cursor/projects/

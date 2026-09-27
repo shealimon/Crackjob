@@ -1,0 +1,95 @@
+import { prisma } from "@/lib/prisma";
+import { newToken, sha256 } from "@/lib/hash";
+import { getAccessSnapshot } from "@/lib/access";
+import { displayNameFromProfile } from "@/lib/user-bundle";
+
+export async function createDesktopSession(options: {
+  userId: string;
+  deviceId?: string;
+  platform?: string;
+}) {
+  const sessionToken = newToken();
+  const tokenHash = sha256(sessionToken);
+  const deviceName = `${options.platform || "Windows"}${
+    options.deviceId ? ` · ${options.deviceId.slice(0, 8)}` : ""
+  }`;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.desktopSession.updateMany({
+      where: { userId: options.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    await tx.desktopSession.create({
+      data: {
+        userId: options.userId,
+        tokenHash,
+        deviceName,
+      },
+    });
+  });
+
+  return { token: sessionToken };
+}
+
+export async function getActiveDesktopSession(userId: string) {
+  return prisma.desktopSession.findFirst({
+    where: { userId, revokedAt: null },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getDesktopSessionByToken(token: string) {
+  return prisma.desktopSession.findFirst({
+    where: { tokenHash: sha256(token), revokedAt: null },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          profile: { select: { firstName: true, lastName: true } },
+        },
+      },
+    },
+  });
+}
+
+export async function userPublicPayload(
+  userId: string,
+  options?: { fresh?: boolean },
+) {
+  if (!userId?.trim()) return null;
+
+  const [user, access] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        profile: { select: { firstName: true, lastName: true } },
+      },
+    }),
+    // Login / session restore must not use a stale free→paid cache entry.
+    getAccessSnapshot(userId, { fresh: options?.fresh ?? true }),
+  ]);
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    name: displayNameFromProfile(user.profile),
+    image: null,
+    plan: access.plan,
+    planStatus: access.status,
+    endsAt: access.endsAt?.toISOString() ?? null,
+    fullAccess: access.fullAccess,
+    exploreRemaining: access.exploreRemaining,
+    solvesToday: access.solvesToday,
+    answerTier: access.answerTier,
+    // Desktop UI still reads this field — map explore remaining for free.
+    creditBalance: access.fullAccess ? 999_999 : (access.exploreRemaining ?? 0),
+    creditsLow:
+      !access.fullAccess &&
+      (access.answerTier === "partial" ||
+        access.answerTier === "blocked" ||
+        (access.exploreRemaining ?? 0) <= 1),
+  };
+}

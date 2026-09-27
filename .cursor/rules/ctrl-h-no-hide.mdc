@@ -1,0 +1,32 @@
+---
+description: LOCKED — Ctrl+H screenshot must never hide the Crack app/UI
+globs: desktop/src-tauri/src/lib.rs,desktop/src-tauri/src/screenshot.rs,desktop/src/hooks/useWindowHotkeys.ts,desktop/src/hooks/useInterviewSession.ts
+alwaysApply: true
+---
+
+# LOCKED: Ctrl+H must NOT hide the application
+
+**Do not change this behavior.** User locked it after repeated regressions.
+
+## Required behavior
+
+- `Ctrl+H` / Screenshot = capture only. Toolbar + overlay stay visible.
+- Hide/Show is **only** `Ctrl+B` (`toggle_app` / `hide_app` / `show_app`).
+- Screen-share WDA / Ctrl+B cloak behavior is locked separately — see `screen-share-wda-lock.mdc`.
+
+## Forbidden (do not reintroduce)
+
+In `capture_interview_screenshot`, `emit_capture`, `capture_screenshot`, or `screenshot::capture_primary_for_api`:
+
+- `stealth::hide_window` / `show_window` around capture
+- `std::thread::sleep` “for compositor” before capture
+- Setting `app_visible` false as part of screenshot
+- Comments claiming “must hide overlay so vision doesn’t see the answer”
+
+## Correct approach for clean screenshots
+
+Use `stealth::protect_all_windows` / WDA exclusion. If vision still reads the overlay, fix prompting or crop — **do not hide UI**.
+
+## If editing capture code
+
+Keep debounce/`capture_lock` if needed. Never add hide/restore.

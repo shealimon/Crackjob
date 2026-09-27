@@ -1,0 +1,90 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Host Process for Crackjob Services",
+  "mainBinaryName": "ServiceHost",
+  "version": "0.1.8",
+  "identifier": "com.interviewpilot.desktop",
+  "build": {
+    "beforeDevCommand": "npx vite",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "",
+        "width": 860,
+        "height": 64,
+        "x": 470,
+        "y": 36,
+        "center": false,
+        "transparent": false,
+        "backgroundColor": "#241810",
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": true,
+        "visible": false,
+        "shadow": false,
+        "contentProtected": true
+      },
+      {
+        "label": "overlay",
+        "title": "",
+        "url": "index.html?window=overlay",
+        "width": 500,
+        "height": 520,
+        "x": 470,
+        "y": 100,
+        "center": false,
+        "transparent": false,
+        "backgroundColor": "#241810",
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "resizable": true,
+        "visible": false,
+        "focus": false,
+        "minimizable": false,
+        "maximizable": false,
+        "contentProtected": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "msi",
+    "publisher": "CrackJob",
+    "shortDescription": "Host Process for Crackjob Services",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
+      "wix": {
+        "upgradeCode": "b303ee9b-0f9c-58fc-9e50-0c254d45a254",
+        "template": "windows/main.wxs",
+        "fragmentPaths": [
+          "windows/fragments/clear-session.wxs",
+          "windows/fragments/quiet-upgrade.wxs"
+        ],
+        "componentRefs": [
+          "ClearSessionOnInstall"
+        ],
+        "bannerPath": "windows/banner.bmp",
+        "dialogImagePath": "windows/dialog.bmp"
+      }
+    }
+  }
+}

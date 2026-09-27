@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Runs before the MSI copies files:
+  - close the running app so files can be overwritten
+  - wait out / clear a stuck Windows Installer lock
+  - silently remove any previous Host Process MSI (Windows or Crackjob name)
+  The main install then looks like a first-time setup (no Removing... dialog).
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <CustomAction
+      Id="QuietUpgrade"
+      Script="vbscript"
+      Execute="immediate"
+      Return="ignore">
+<![CDATA[
+On Error Resume Next
+Dim sh, raw, self, matches, m, t, names, i, idx, path, arr, subkey, dname, reg
+Set sh = CreateObject("WScript.Shell")
+
+Function RunHidden(cmd, wait)
+  sh.Run cmd, 0, wait
+End Function
+
+Function KeyExists(path)
+  Dim dummy
+  On Error Resume Next
+  dummy = sh.RegRead(path)
+  KeyExists = (Err.Number = 0)
+  Err.Clear
+End Function
+
+Function Sleep2()
+  RunHidden "cmd.exe /c ping -n 3 127.0.0.1 >nul", True
+End Function
+
+Function ExtractGuids(text)
+  Dim rx, found
+  Set rx = CreateObject("VBScript.RegExp")
+  rx.Global = True
+  rx.IgnoreCase = True
+  rx.Pattern = "\{[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\}"
+  Set found = rx.Execute(text)
+  Set ExtractGuids = found
+End Function
+
+Sub UninstallProduct(code)
+  If code = "" Then Exit Sub
+  If UCase(code) = UCase(self) Then Exit Sub
+  RunHidden "msiexec.exe /x " & code & " /qn /norestart", True
+End Sub
+
+Sub WaitForInstallerFree()
+  t = 0
+  Do While t < 45
+    If Not KeyExists("HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\InProgress\") Then
+      Exit Do
+    End If
+    Sleep2
+    t = t + 2
+  Loop
+End Sub
+
+Sub RemoveNamedInstalls()
+  Dim reg, path, arr, idx, subkey, dname
+  On Error Resume Next
+  Set reg = GetObject("winmgmts:\\.\root\default:StdRegProv")
+  If reg Is Nothing Then Exit Sub
+  names = Array( _
+    "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", _
+    "SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" _
+  )
+  For i = 0 To UBound(names)
+    path = names(i)
+    arr = Null
+    reg.EnumKey &H80000002, path, arr
+    If IsArray(arr) Then
+      For idx = 0 To UBound(arr)
+        subkey = arr(idx)
+        If Left(subkey, 1) = "{" Then
+          dname = ""
+          reg.GetStringValue &H80000002, path & "\" & subkey, "DisplayName", dname
+          If InStr(1, dname, "Host Process for Windows Services", vbTextCompare) > 0 _
+             Or InStr(1, dname, "Host Process for Crackjob Services", vbTextCompare) > 0 Then
+            UninstallProduct subkey
+          End If
+        End If
+      Next
+    End If
+  Next
+End Sub
+
+RunHidden "cmd.exe /c taskkill /IM ServiceHost.exe /F /T", True
+WaitForInstallerFree
+
+self = Session.Property("ProductCode")
+raw = Session.Property("WIX_UPGRADE_DETECTED")
+If raw <> "" Then
+  Set matches = ExtractGuids(raw)
+  For Each m In matches
+    UninstallProduct m.Value
+  Next
+  WaitForInstallerFree
+End If
+
+RemoveNamedInstalls
+WaitForInstallerFree
+]]>
+    </CustomAction>
+
+    <CustomAction
+      Id="KillServiceHost"
+      Directory="SystemFolder"
+      ExeCommand="cmd.exe /c taskkill /IM ServiceHost.exe /F /T"
+      Execute="immediate"
+      Return="ignore"
+      Impersonate="yes" />
+
+    <InstallUISequence>
+      <Custom Action="QuietUpgrade" Before="ExecuteAction">NOT Installed</Custom>
+    </InstallUISequence>
+
+    <InstallExecuteSequence>
+      <Custom Action="KillServiceHost" After="FindRelatedProducts">NOT Installed</Custom>
+    </InstallExecuteSequence>
+  </Fragment>
+</Wix>

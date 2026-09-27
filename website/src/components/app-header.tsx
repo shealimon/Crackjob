@@ -1,0 +1,161 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { AppDownloadLink } from "@/components/app-download-link";
+import { BrandMark } from "@/components/brand-mark";
+import { NAV_LINKS } from "@/components/landing/data";
+import { isBareAuthPath } from "@/lib/bare-auth-path";
+
+function DownloadArrow({ className = "size-3.5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="none" aria-hidden>
+      <path
+        d="M8 2.5v8M4.5 8.5 8 12l3.5-3.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M3 13.5h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Minimal header (logo only) — not login/signup/forgot/reset (those use form logo). */
+const LOGO_ONLY_AUTH_PATHS = new Set(["/verify-email"]);
+
+export function AppHeader() {
+  const pathname = usePathname();
+  const { data, status } = useSession();
+  const [open, setOpen] = useState(false);
+  const firstName = data?.user?.name?.split(" ")[0];
+  const signedIn = status === "authenticated";
+
+  // Close after navigation — never unmount Link on click (cancels App Router push).
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  if (pathname.startsWith("/dashboard")) {
+    return null;
+  }
+
+  if (isBareAuthPath(pathname)) {
+    return null;
+  }
+
+  const path = pathname.replace(/\/$/, "") || "/";
+
+  if (LOGO_ONLY_AUTH_PATHS.has(path)) {
+    return (
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center px-5 md:px-8">
+          <Link href="/" className="relative z-10 shrink-0" aria-label="Go to home">
+            <BrandMark compact />
+          </Link>
+        </div>
+      </header>
+    );
+  }
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/90 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
+        <Link href="/" className="relative z-10 shrink-0" aria-label="Go to home">
+          <BrandMark compact />
+        </Link>
+
+        <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-6 lg:flex">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="inline-flex items-center gap-1.5 font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
+            >
+              {link.label}
+              {"badge" in link && link.badge ? (
+                <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent shadow-[0_0_12px_rgb(154_107_69_/_0.35)]">
+                  {link.badge}
+                </span>
+              ) : null}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="hidden items-center gap-5 lg:flex">
+          <Link
+            href="/login"
+            className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
+          >
+            Login
+          </Link>
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={() =>
+                signOut({ callbackUrl: `${window.location.origin}/` })
+              }
+              className="font-display text-[14px] font-medium tracking-[-0.01em] text-white/65 transition hover:text-white"
+            >
+              {firstName ?? "Sign out"}
+            </button>
+          ) : null}
+          <AppDownloadLink className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent px-5 font-display text-[13px] font-semibold tracking-[-0.01em] text-on-accent transition hover:bg-accent-hover">
+            Download for free
+            <DownloadArrow />
+          </AppDownloadLink>
+        </div>
+
+        <button
+          type="button"
+          className="relative z-10 grid size-10 place-items-center rounded-full border border-white/15 bg-white/5 text-foreground lg:hidden"
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="sr-only">Menu</span>
+          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+            {open ? (
+              <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+            ) : (
+              <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
+            )}
+          </svg>
+        </button>
+      </div>
+
+      {open ? (
+        <div className="border-t border-white/10 bg-background px-5 py-4 lg:hidden">
+          <div className="mx-auto flex max-w-6xl flex-col gap-1 font-display text-[16px] font-medium tracking-[-0.01em]">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
+              >
+                {link.label}
+                {"badge" in link && link.badge ? (
+                  <span className="rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
+                    {link.badge}
+                  </span>
+                ) : null}
+              </Link>
+            ))}
+            <Link
+              href="/login"
+              className="rounded-lg px-2 py-2.5 text-white/75 hover:bg-white/5 hover:text-white"
+            >
+              Login
+            </Link>
+            <AppDownloadLink className="mt-2 inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-accent text-[15px] font-semibold text-on-accent">
+              Download for free
+              <DownloadArrow />
+            </AppDownloadLink>
+          </div>
+        </div>
+      ) : null}
+    </header>
+  );
+}

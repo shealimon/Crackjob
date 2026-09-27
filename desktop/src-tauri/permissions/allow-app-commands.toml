@@ -1,0 +1,31 @@
+[[permission]]
+identifier = "allow-app-commands"
+description = "Enables all InterviewPilot desktop commands."
+commands.allow = [
+  "load_prefs",
+  "save_prefs",
+  "set_interview_active",
+  "capture_screenshot",
+  "show_overlay",
+  "hide_overlay",
+  "toggle_overlay",
+  "set_click_through",
+  "get_stealth_status",
+  "audio_status",
+  "start_system_audio",
+  "stop_system_audio",
+  "take_audio_chunk",
+  "peek_audio_chunk",
+  "force_take_audio_chunk",
+  "discard_audio_chunk",
+  "set_toolbar_window_expanded",
+  "set_overlay_layout",
+  "request_solve",
+  "move_app_windows",
+  "quit_app",
+  "load_interview_day",
+  "load_interview_history",
+  "append_interview_entry",
+  "mark_interview_synced",
+  "list_unsynced_interview_entries",
+]
