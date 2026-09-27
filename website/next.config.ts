@@ -8,7 +8,13 @@ const CANONICAL_ORIGIN = "https://crackjob.co";
 const REDIRECT_HOSTS = ["www.porpin.com", "porpin.com", "www.crackjob.co"];
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@prisma/client", "razorpay", "pdf-parse", "pdfjs-dist"],
+  serverExternalPackages: [
+    "@prisma/client",
+    "razorpay",
+    "pdf-parse",
+    "pdfjs-dist",
+    "@napi-rs/canvas",
+  ],
   async redirects() {
     const helpToGuide = [
       { source: "/help", destination: "/how-it-works/getting-started", permanent: true },

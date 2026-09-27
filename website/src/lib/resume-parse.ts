@@ -8,6 +8,16 @@ type PdfJsWorkerGlobal = {
 };
 
 let pdfWorkerConfigured = false;
+let pdfDomPolyfillsReady = false;
+
+/** pdfjs-dist expects browser DOM types; @napi-rs/canvas supplies them in Node/Next. */
+async function ensurePdfDomPolyfills() {
+  if (pdfDomPolyfillsReady) return;
+  pdfDomPolyfillsReady = true;
+  if (typeof globalThis.DOMMatrix === "undefined") {
+    await import("@napi-rs/canvas");
+  }
+}
 
 /** Next/Turbopack breaks dynamic `import(workerSrc)` — preload handler on globalThis. */
 async function ensurePdfWorker() {
@@ -57,6 +67,7 @@ export function normalizeResumeText(text: string, maxChars = RESUME_TEXT_MAX) {
 }
 
 async function parsePdf(buffer: Buffer): Promise<string> {
+  await ensurePdfDomPolyfills();
   await ensurePdfWorker();
   const { PDFParse } = await import("pdf-parse");
   const parser = new PDFParse({ data: buffer });
